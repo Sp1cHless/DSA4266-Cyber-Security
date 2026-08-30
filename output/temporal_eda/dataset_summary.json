@@ -1,0 +1,112 @@
+{
+  "input_file": "NF-UNSW-NB15-v3.csv",
+  "row_count": 2365424,
+  "column_count": 55,
+  "capture_start_utc": "2015-01-22T11:49:36.907000+00:00",
+  "capture_end_utc": "2015-02-18T12:29:24.927000+00:00",
+  "calendar_span_days": 27.02763912037037,
+  "chosen_time_bucket": "1min",
+  "binary_class_counts": {
+    "0": 2237731,
+    "1": 127693
+  },
+  "attack_class_counts": {
+    "Benign": 2237731,
+    "Exploits": 42748,
+    "Fuzzers": 33816,
+    "Generic": 19651,
+    "Reconnaissance": 17074,
+    "Backdoor": 4659,
+    "DoS": 5980,
+    "Shellcode": 2381,
+    "Analysis": 1226,
+    "Worms": 158
+  },
+  "attack_percentage": 5.398313367920508,
+  "invalid_start_timestamps": 0,
+  "invalid_end_timestamps": 0,
+  "flows_with_end_before_start": 0,
+  "total_missing_cells": 63425,
+  "features_with_missing_values": {
+    "SRC_TO_DST_SECOND_BYTES": 63425
+  },
+  "total_infinite_cells": 181561,
+  "features_with_infinite_values": {
+    "SRC_TO_DST_SECOND_BYTES": 59068,
+    "DST_TO_SRC_SECOND_BYTES": 122493
+  },
+  "original_row_order_inversions": 335443,
+  "duplicate_start_timestamps": 472020,
+  "exact_duplicate_rows_by_64bit_hash": 14815,
+  "duration_comparisons": 2365424,
+  "duration_exact_match_percentage": 53.029224358930996,
+  "duration_within_one_ms_percentage": 100.0,
+  "duration_absolute_difference_mean_ms": 0.46970775641069,
+  "duration_absolute_difference_max_ms": 1.0,
+  "duration_absolute_difference_quantiles_ms": [
+    0.0,
+    0.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "timestamp_gap_counts": {
+    "over_1_minute": 9,
+    "over_10_minutes": 2,
+    "over_1_hour": 1
+  },
+  "capture_session_count": 2,
+  "session_gap_definition_minutes": 60.0,
+  "split_boundaries_utc": {
+    "validation_starts": "2015-02-18T05:42:13.382000+00:00",
+    "test_starts": "2015-02-18T09:08:16.106000+00:00"
+  },
+  "split_row_counts": {
+    "test": 354815,
+    "train": 1655796,
+    "validation": 354813
+  },
+  "split_attack_percentages": {
+    "test": 8.767103983766187,
+    "train": 3.937018811496102,
+    "validation": 8.84888659660159
+  },
+  "classes_missing_from_splits": {
+    "train": [],
+    "validation": [],
+    "test": []
+  },
+  "capture_session_attack_percentages": {
+    "1": 1.5380252115643431,
+    "2": 8.961345352141988
+  },
+  "largest_gap_minutes": 37438.06498333333,
+  "sample_temporal_feature_medians": {
+    "FLOW_DURATION_MILLISECONDS": {
+      "benign": 28.0,
+      "attack": 530.5
+    },
+    "SRC_TO_DST_IAT_AVG": {
+      "benign": 0.0,
+      "attack": 50.0
+    },
+    "DST_TO_SRC_IAT_AVG": {
+      "benign": 0.0,
+      "attack": 59.5
+    }
+  },
+  "chronological_split_train_test_drift": {
+    "all_traffic": {
+      "jensen_shannon_divergence": 0.0074377151030504875,
+      "total_variation_distance": 0.048300851722700835,
+      "largest_shift_class": "Benign",
+      "largest_absolute_shift_percentage_points": 4.830085172270082
+    },
+    "attacks_only": {
+      "jensen_shannon_divergence": 0.003565317729268651,
+      "total_variation_distance": 0.060969175190806475,
+      "largest_shift_class": "Fuzzers",
+      "largest_absolute_shift_percentage_points": 3.2498194010408517
+    }
+  }
+}

@@ -1,0 +1,7 @@
+scope,left_split,right_split,jensen_shannon_divergence,total_variation_distance,largest_shift_class,largest_absolute_shift_percentage_points
+all_traffic,train,validation,0.00849813424795879,0.050671807490030876,Benign,4.911867785105484
+all_traffic,train,test,0.0074377151030504875,0.048300851722700835,Benign,4.830085172270082
+all_traffic,validation,test,0.0012334779726278697,0.005738459372527147,Fuzzers,0.4067048384925009
+attacks_only,train,validation,0.016932372544910708,0.05124772787777284,Backdoor,4.525093111858388
+attacks_only,train,test,0.003565317729268651,0.060969175190806475,Fuzzers,3.2498194010408517
+attacks_only,validation,test,0.013971381872111301,0.060633546121735986,Fuzzers,4.376639509914007

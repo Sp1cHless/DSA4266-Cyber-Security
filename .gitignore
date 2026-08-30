@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+.matplotlib-cache/
+datasets/nf_unsw_nb15_v3/NF-UNSW-NB15-v3.csv
