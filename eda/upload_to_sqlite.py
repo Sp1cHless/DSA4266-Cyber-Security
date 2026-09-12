@@ -6,23 +6,27 @@ Full production-ready version with error handling and logging
 
 import pandas as pd
 import sqlite3
-import os
 import sys
 from pathlib import Path
 from datetime import datetime
 
 # ============================================================
-# CONFIGURATION - CHANGE THESE PATHS AS NEEDED
+# CONFIGURATION
 # ============================================================
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 # CSV file location (input)
-CSV_FILE = '/Users/kailorenneo/Documents/dsa4266/DSA4266-Cyber-Security/datasets/head_10_rows.csv'
+CSV_FILE = REPO_ROOT / 'datasets' / 'NF-UNSW-NB15-v3.csv'
 
 # SQLite database location (output)
-DB_FILE = '/Users/kailorenneo/Documents/dsa4266/DSA4266-Cyber-Security/datasets/network_traffic.db'
+DB_FILE = REPO_ROOT / 'datasets' / 'network_traffic.db'
 
 # Table name in the database
 TABLE_NAME = 'network_flows'
+
+# Number of CSV rows to load at a time
+CHUNK_SIZE = 100_000
 
 # ============================================================
 # FUNCTIONS
@@ -130,46 +134,20 @@ def main():
     # ------------------------------------------------------------------
     # STEP 1: Check if CSV file exists
     # ------------------------------------------------------------------
-    if not os.path.exists(CSV_FILE):
+    if not CSV_FILE.exists():
         print_error(f"CSV file not found: {CSV_FILE}")
         print_info("Please check the file path and try again.")
         sys.exit(1)
     
     # ------------------------------------------------------------------
-    # STEP 2: Read CSV file
-    # ------------------------------------------------------------------
-    print_header("📂 READING CSV FILE")
-    try:
-        df = pd.read_csv(CSV_FILE)
-        print_success(f"Loaded {len(df)} rows with {len(df.columns)} columns")
-        print_info(f"Columns: {', '.join(df.columns[:10])}...")
-    except pd.errors.EmptyDataError:
-        print_error("CSV file is empty.")
-        sys.exit(1)
-    except Exception as e:
-        print_error(f"Error reading CSV: {e}")
-        sys.exit(1)
-    
-    if len(df) == 0:
-        print_error("CSV file has no data rows.")
-        sys.exit(1)
-    
-    # ------------------------------------------------------------------
-    # STEP 3: Clean column names for SQL
-    # ------------------------------------------------------------------
-    print_header("🧹 CLEANING COLUMN NAMES")
-    df = clean_column_names(df)
-    print_success(f"Cleaned {len(df.columns)} column names")
-    
-    # ------------------------------------------------------------------
-    # STEP 4: Connect to SQLite
+    # STEP 2: Connect to SQLite
     # ------------------------------------------------------------------
     print_header("🗄️ CONNECTING TO DATABASE")
     
     # Ensure directory exists
-    db_dir = os.path.dirname(DB_FILE)
-    if db_dir and not os.path.exists(db_dir):
-        os.makedirs(db_dir, exist_ok=True)
+    db_dir = DB_FILE.parent
+    if not db_dir.exists():
+        db_dir.mkdir(parents=True, exist_ok=True)
         print_info(f"Created directory: {db_dir}")
     
     try:
@@ -181,74 +159,45 @@ def main():
         sys.exit(1)
     
     # ------------------------------------------------------------------
-    # STEP 5: Drop table if exists (for fresh upload)
+    # STEP 3: Import CSV in chunks
     # ------------------------------------------------------------------
-    print_header("📋 CREATING TABLE")
-    
+    print_header("📥 IMPORTING CSV IN CHUNKS")
+    print_info(f"Chunk size: {CHUNK_SIZE:,} rows")
+
     try:
         cursor.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
         print_info(f"Dropped existing table (if any): {TABLE_NAME}")
+
+        total_rows = 0
+        column_count = 0
+
+        for chunk_number, chunk in enumerate(pd.read_csv(CSV_FILE, chunksize=CHUNK_SIZE), start=1):
+            chunk = clean_column_names(chunk)
+            column_count = len(chunk.columns)
+            if chunk_number == 1:
+                print_success(f"Detected {column_count} columns")
+                print_info(f"Columns: {', '.join(chunk.columns[:10])}...")
+
+            chunk.to_sql(TABLE_NAME, conn, if_exists='append', index=False)
+            total_rows += len(chunk)
+            print(f"  ✓ Imported chunk {chunk_number}: {len(chunk):,} rows ({total_rows:,} total)")
+
+        if total_rows == 0:
+            print_error("CSV file has no data rows.")
+            conn.close()
+            sys.exit(1)
+
+        conn.commit()
+        print_success(f"Inserted {total_rows:,} rows successfully!")
+        print_success(f"Columns: {column_count}")
+    except pd.errors.EmptyDataError:
+        print_error("CSV file is empty.")
+        conn.close()
+        sys.exit(1)
     except Exception as e:
-        print_info(f"No existing table to drop: {e}")
-    
-    # ------------------------------------------------------------------
-    # STEP 6: Create table with proper schema
-    # ------------------------------------------------------------------
-    create_sql = generate_create_table_sql(df, TABLE_NAME)
-    print_info("Generated CREATE TABLE SQL:")
-    print("  " + create_sql.replace('\n', '\n  '))
-    
-    try:
-        cursor.execute(create_sql)
-        print_success(f"Table created: {TABLE_NAME}")
-    except sqlite3.OperationalError as e:
-        print_error(f"Error creating table: {e}")
-        print_info("Try using the fallback CREATE TABLE...")
-        # Fallback: Create table with TEXT for all columns
-        fallback_cols = ', '.join([f'"{col}" TEXT' for col in df.columns])
-        fallback_sql = f"CREATE TABLE {TABLE_NAME} ({fallback_cols})"
-        cursor.execute(fallback_sql)
-        print_success(f"Table created with fallback schema")
-    
-    # ------------------------------------------------------------------
-    # STEP 7: Insert data
-    # ------------------------------------------------------------------
-    print_header("📥 INSERTING DATA")
-    
-    # Convert DataFrame to list of tuples
-    data_tuples = [tuple(row) for row in df.values]
-    
-    # Generate INSERT statement
-    columns = ', '.join([f'"{col}"' for col in df.columns])
-    placeholders = ','.join(['?' for _ in df.columns])
-    insert_sql = f"INSERT INTO {TABLE_NAME} ({columns}) VALUES ({placeholders})"
-    
-    # Insert in batches for performance
-    batch_size = 1000
-    total_rows = len(data_tuples)
-    inserted = 0
-    
-    print_info(f"Inserting {total_rows} rows in batches of {batch_size}...")
-    
-    for i in range(0, total_rows, batch_size):
-        batch = data_tuples[i:i+batch_size]
-        try:
-            cursor.executemany(insert_sql, batch)
-            inserted += len(batch)
-            print(f"  ✓ Inserted rows {i+1} to {min(i+batch_size, total_rows)} ({inserted}/{total_rows})")
-        except Exception as e:
-            print_error(f"Error inserting batch {i}-{i+batch_size}: {e}")
-            # Try inserting one by one for this batch
-            print_info("  Retrying row by row...")
-            for idx, row in enumerate(batch, start=i):
-                try:
-                    cursor.execute(insert_sql, row)
-                except Exception as row_error:
-                    print_error(f"    Failed on row {idx+1}: {row_error}")
-                    print_info(f"    Row data: {row}")
-    
-    conn.commit()
-    print_success(f"Inserted {inserted} rows successfully!")
+        print_error(f"Error importing CSV: {e}")
+        conn.close()
+        sys.exit(1)
     
     # ------------------------------------------------------------------
     # STEP 8: Verify and display results
@@ -296,7 +245,7 @@ def main():
     print_success(f"Database created: {DB_FILE}")
     print_success(f"Table: {TABLE_NAME}")
     print_success(f"Rows inserted: {final_count}")
-    print_success(f"Columns: {len(df.columns)}")
+    print_success(f"Columns: {len(schema)}")
     
     print("\n" + "="*70)
     print("📝 HOW TO USE:")

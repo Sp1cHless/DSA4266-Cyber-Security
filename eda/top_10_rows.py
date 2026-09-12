@@ -1,9 +1,10 @@
 import pandas as pd
-import os
+from pathlib import Path
 
 # === CONFIGURATION ===
-INPUT_FILE = '/Users/kailorenneo/Documents/dsa4266/DSA4266-Cyber-Security/datasets/NF-UNSW-NB15-v3.csv'
-OUTPUT_FILE = '/Users/kailorenneo/Documents/dsa4266/DSA4266-Cyber-Security/datasets/head_10_rows.csv'
+REPO_ROOT = Path(__file__).resolve().parents[1]
+INPUT_FILE = REPO_ROOT / 'datasets' / 'NF-UNSW-NB15-v3.csv'
+OUTPUT_FILE = REPO_ROOT / 'datasets' / 'head_10_rows.csv'
 N_ROWS = 10
 
 # === READ INPUT CSV ===
