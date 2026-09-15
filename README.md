@@ -74,20 +74,36 @@ sqlite3 datasets/network_traffic.db ".schema network_flows"
 
 ## Temporal EDA and Data Processing
 
-Temporal bucketing and sequence-generation scripts are kept in `temporal_eda/`.
-The generated bucket table remains inside the local SQLite database, and the
-processed NPZ/CSV files are ignored by Git.
+Temporal EDA and feature-engineering scripts are kept in `temporal_eda/`. The
+local data pipeline has three levels:
+
+- `network_flows` contains the original raw flow rows and imported columns.
+- `temporal_buckets_10s_full` contains one engineered row per source IP and
+  10-second bucket.
+- `processed_binary_temporal/` contains model-ready fixed-length train/test
+  sequences and their metadata.
+
+Generated database tables and processed files remain local and are ignored by
+Git.
 
 ### 1. Build 10-Second Source-IP Buckets
 
 From the repository root, run:
 
 ```bash
-sqlite3 datasets/network_traffic.db < temporal_eda/01_build_temporal_buckets.sql
+python temporal_eda/01_build_temporal_buckets.py
 ```
 
-This creates the `temporal_buckets_10s` table without changing
-`network_flows`.
+This creates `temporal_buckets_10s_full` without changing `network_flows`.
+Each bucket retains the current numerical flow aggregates and transforms raw
+categorical codes into behavioural features such as protocol ratios,
+distribution diversity/concentration, decoded TCP-flag ratios, and grouped
+ICMP, DNS, and FTP activity. Exact IP addresses, ports, identifiers, and raw
+categorical codes are not used as model inputs. The generated feature order and
+retained frequent L7 categories are recorded in
+`processed_binary_temporal/categorical_schema.json`. Additional continuous
+NetFlow fields are intentionally deferred until their numerical aggregation
+rules are defined.
 
 ### 2. Build Host-Disjoint Binary Sequences
 

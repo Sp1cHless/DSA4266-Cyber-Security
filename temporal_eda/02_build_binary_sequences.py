@@ -12,8 +12,8 @@ import pandas as pd
 # Configuration
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = REPO_ROOT / "datasets" / "network_traffic.db"
-BUCKET_TABLE = "temporal_buckets_10s"
 OUTPUT_DIR = REPO_ROOT / "processed_binary_temporal"
+SCHEMA_PATH = OUTPUT_DIR / "categorical_schema.json"
 
 BIN_MS = 10_000
 SEQUENCE_LENGTH = 10
@@ -32,19 +32,8 @@ SOURCE_IP_COL = "ipv4_src_addr"
 TIME_COL = "bucket_start_ms"
 LABEL_COL = "label"
 
-FEATURE_COLS = [
-    "flow_count",
-    "dst_ip_count",
-    "dst_port_count",
-    "src_port_count",
-    "in_bytes_sum",
-    "out_bytes_sum",
-    "in_pkts_sum",
-    "out_pkts_sum",
-    "duration_mean",
-    "duration_min",
-    "duration_max",
-]
+BUCKET_TABLE = ""
+FEATURE_COLS = []
 
 METADATA_COLS = [
     "sequence_id",
@@ -57,6 +46,26 @@ METADATA_COLS = [
     "split",
     "round",
 ]
+
+
+def load_feature_schema() -> tuple[str, list[str]]:
+    if not SCHEMA_PATH.exists():
+        raise FileNotFoundError(
+            f"Categorical schema not found: {SCHEMA_PATH}\n"
+            "Run temporal_eda/01_build_temporal_buckets.py first."
+        )
+    with SCHEMA_PATH.open(encoding="utf-8") as file:
+        schema = json.load(file)
+
+    bucket_table = schema.get("bucket_table")
+    features = schema.get("feature_names")
+    if not isinstance(bucket_table, str) or not bucket_table:
+        raise ValueError("categorical_schema.json has no valid bucket_table.")
+    if not isinstance(features, list) or not features:
+        raise ValueError("categorical_schema.json has no valid feature_names list.")
+    if len(features) != len(set(features)):
+        raise ValueError("categorical_schema.json contains duplicate feature names.")
+    return bucket_table, features
 
 
 def validate_configuration() -> None:
@@ -379,6 +388,8 @@ def build_round(
 
 
 def main() -> None:
+    global BUCKET_TABLE, FEATURE_COLS
+    BUCKET_TABLE, FEATURE_COLS = load_feature_schema()
     validate_configuration()
     buckets = load_buckets()
     benign_ips, malicious_ips = discover_host_classes(buckets)
