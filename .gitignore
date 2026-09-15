@@ -6,3 +6,4 @@ __pycache__/
 datasets/NF-UNSW-NB15-v3.csv
 datasets/network_traffic.db
 datasets/.DS_Store
+processed_binary_temporal/

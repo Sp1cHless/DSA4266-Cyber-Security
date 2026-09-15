@@ -72,3 +72,35 @@ You can also inspect the table:
 sqlite3 datasets/network_traffic.db ".schema network_flows"
 ```
 
+## Temporal EDA and Data Processing
+
+Temporal bucketing and sequence-generation scripts are kept in `temporal_eda/`.
+The generated bucket table remains inside the local SQLite database, and the
+processed NPZ/CSV files are ignored by Git.
+
+### 1. Build 10-Second Source-IP Buckets
+
+From the repository root, run:
+
+```bash
+sqlite3 datasets/network_traffic.db < temporal_eda/01_build_temporal_buckets.sql
+```
+
+This creates the `temporal_buckets_10s` table without changing
+`network_flows`.
+
+### 2. Build Host-Disjoint Binary Sequences
+
+```bash
+python temporal_eda/02_build_binary_sequences.py
+```
+
+The script creates two reproducible evaluation rounds under:
+
+```text
+processed_binary_temporal/
+```
+
+Each round keeps source IPs disjoint between training and testing. The benign
+test hosts are selected so their valid sequence count is as close as possible
+to 20% of all benign sequences, with at least two contributing test hosts.
