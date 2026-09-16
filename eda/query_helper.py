@@ -7,13 +7,16 @@ import pandas as pd
 import sqlite3
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DB_PATH = REPO_ROOT / 'datasets' / 'network_traffic.db'
+
 class NetworkTrafficDB:
     """Wrapper class for querying the network traffic database."""
     
     def __init__(self, db_path=None):
         """Initialize with database path."""
         if db_path is None:
-            db_path = '/Users/kailorenneo/Documents/dsa4266/DSA4266-Cyber-Security/datasets/network_traffic.db'
+            db_path = DEFAULT_DB_PATH
         self.db_path = db_path
         self.conn = None
         self.table_name = 'network_flows'

@@ -1,15 +1,17 @@
 import pandas as pd
 import sqlite3
+from pathlib import Path
 
 # === CONNECT TO DATABASE ===
-DB_PATH = '/Users/kailorenneo/Documents/dsa4266/DSA4266-Cyber-Security/datasets/network_traffic.db'
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DB_PATH = REPO_ROOT / 'datasets' / 'network_traffic.db'
 conn = sqlite3.connect(DB_PATH)
 
 # === BASIC QUERIES ===
 
-# 1. View all data
-df_all = pd.read_sql_query("SELECT * FROM network_flows", conn)
-print(df_all)
+# 1. Count all rows without loading the full table into memory
+df_count = pd.read_sql_query("SELECT COUNT(*) AS total_rows FROM network_flows", conn)
+print(df_count)
 
 # 2. View first 10 rows
 df_head = pd.read_sql_query("SELECT * FROM network_flows LIMIT 10", conn)
