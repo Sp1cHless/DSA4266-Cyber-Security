@@ -1,0 +1,9 @@
+attack,n_windows,recall,ci_95,underpowered
+Exploits,912,1.0,"[0.996, 1.000]",False
+Fuzzers,691,1.0,"[0.994, 1.000]",False
+Generic,333,1.0,"[0.989, 1.000]",False
+Reconnaissance,148,1.0,"[0.975, 1.000]",False
+DoS,71,1.0,"[0.949, 1.000]",False
+Shellcode,19,1.0,"[0.832, 1.000]",True
+Analysis,16,1.0,"[0.806, 1.000]",True
+Backdoor,1,1.0,"[0.207, 1.000]",True
