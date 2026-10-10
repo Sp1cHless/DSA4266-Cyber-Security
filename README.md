@@ -1,75 +1,81 @@
 # DSA4266-Cyber-Security
 
+## Project Layout
+
+```text
+data_setup/       Optional raw-CSV to SQLite import utilities
+temporal_eda/     Active temporal feature, sequence, and CIC extension builders
+analysis/         Read-only coverage and trained-model diagnostic tools
+docs/             Experiment status and reproducibility notes
+archive/          Historical September EDA scripts and plots; not active pipeline code
+datasets/         Local raw data and SQLite databases; large files are ignored
+experiments/      Local model and audit outputs; ignored
+processed_binary_temporal*/  Local model-ready datasets; ignored
+```
+
+The active UNSW control model entry point is `run_cnn_ae_temporal_control.py`.
+The separate root-level `audit.py` and `preprocess.py` belong to the team's
+flow-level pipeline and are retained for comparison. Current measured progress,
+CICIDS2018 limitations, and database checksums are recorded in
+[`docs/EXPERIMENT_STATUS.md`](docs/EXPERIMENT_STATUS.md).
+
 ## Local Dataset Setup
 
-The full `NF-UNSW-NB15-v3.csv` dataset is too large to commit to GitHub, so each teammate should download/copy it locally and generate their own SQLite database.
+Large source datasets, generated SQLite databases, model-ready arrays, and
+experiment outputs are not committed to Git. Prefer distributing prepared
+artifacts through team shared storage so teammates do not need to repeat the
+hour-long bucket build. Keep the code path below for reproducibility.
 
 Expected local files:
 
 ```text
 datasets/NF-UNSW-NB15-v3.csv      # raw dataset, not committed
-datasets/network_traffic.db       # generated SQLite DB, not committed
+datasets/network_traffic.db       # prepared or locally generated UNSW DB
+datasets/NF-CICIDS2018-v3.csv     # optional CIC source data
+datasets/cic_2018_traffic.db      # optional prepared CIC DB
 ```
 
-Both files are ignored by Git. This keeps the repository lightweight while still allowing everyone to run the same analysis code.
+### Preferred: use prepared artifacts
 
-### 1. Place the Raw CSV
+Download the shared database or processed-data package and place each file at
+the path shown above. Verify it against the checksum in
+`docs/EXPERIMENT_STATUS.md`. A teammate who only runs model training needs the
+processed data package, not the SQLite database or raw CSV.
+
+### Optional: rebuild the UNSW database
 
 Put the full dataset CSV here:
 
-```bash
+```text
 datasets/NF-UNSW-NB15-v3.csv
 ```
 
-Check that it exists:
-
-```bash
-ls -lh datasets/NF-UNSW-NB15-v3.csv
-```
-
-### 2. Install Python Dependencies
-
 Create and activate a virtual environment if you have not already:
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install pandas
 ```
-
-Install the packages used by the SQLite upload/query scripts:
-
-```bash
-pip install pandas
-```
-
-### 3. Generate the SQLite Database
 
 From the repository root, run:
 
-```bash
-python eda/upload_to_sqlite.py
+```powershell
+python .\data_setup\import_unsw_to_sqlite.py
 ```
 
 This reads `datasets/NF-UNSW-NB15-v3.csv` and creates:
 
-```bash
+```text
 datasets/network_traffic.db
 ```
 
 The script creates a table called `network_flows`.
 
-### 4. Verify the Database
+Verify it without requiring the external SQLite command-line program:
 
-Run:
-
-```bash
-sqlite3 datasets/network_traffic.db "SELECT COUNT(*) FROM network_flows;"
-```
-
-You can also inspect the table:
-
-```bash
-sqlite3 datasets/network_traffic.db ".schema network_flows"
+```powershell
+python -c "import sqlite3; c=sqlite3.connect(r'datasets/network_traffic.db'); print(c.execute('SELECT COUNT(*) FROM network_flows').fetchone()[0]); c.close()"
 ```
 
 ## Temporal EDA and Data Processing
@@ -120,6 +126,42 @@ processed_binary_temporal/
 Each round keeps source IPs disjoint between training and testing. The benign
 test hosts are selected so their valid sequence count is as close as possible
 to 20% of all benign sequences, with at least two contributing test hosts.
+
+The sequence stride is configured by `STRIDE` in
+`temporal_eda/02_build_binary_sequences.py` and is saved in
+`processed_binary_temporal/split_manifest.json`. Regenerate the sequences after
+changing it; existing NPZ files do not update automatically.
+
+### 3. Optional CICIDS2018 Extension
+
+The CIC builder is exploratory and does not replace the UNSW control pipeline:
+
+```powershell
+python .\temporal_eda\03_build_merged_temporal_dataset.py import
+python .\temporal_eda\03_build_merged_temporal_dataset.py buckets
+python .\temporal_eda\03_build_merged_temporal_dataset.py assemble
+```
+
+It imports CIC into a separate database, reuses the frozen 88-feature schema,
+and creates benign-only train/validation/holdout data under
+`processed_binary_temporal_unsw_cic/`. The current CIC holdout is not a binary
+attack test set.
+
+## Model and Analysis Commands
+
+Run the UNSW CNN autoencoder control:
+
+```powershell
+python .\run_cnn_ae_temporal_control.py --data-dir .\processed_binary_temporal --outdir .\experiments\cnn_ae_temporal_control_seed0 --seed 0
+```
+
+Run read-only audits and diagnostics:
+
+```powershell
+python .\analysis\audit_data_coverage.py
+python .\analysis\audit_cic_coverage.py
+python .\analysis\diagnose_cnn_ae_hosts_v2.py --run-dir .\experiments\cnn_ae_temporal_control_seed0
+```
 
 ## Temporal Feature Definitions
 

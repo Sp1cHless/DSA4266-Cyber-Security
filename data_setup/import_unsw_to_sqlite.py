@@ -1,7 +1,7 @@
-"""
-upload_to_sqlite.py
-Upload CSV to SQLite database for easy querying
-Full production-ready version with error handling and logging
+"""Import the local NF-UNSW-NB15-v3 CSV into SQLite.
+
+Run from the repository root:
+    python data_setup/import_unsw_to_sqlite.py
 """
 
 import pandas as pd
@@ -258,7 +258,7 @@ def main():
     conn = sqlite3.connect('{}')
     df = pd.read_sql_query('SELECT * FROM {} LIMIT 10', conn)
     
-    # Or use the helper functions in query_helper.py
+    # Historical query examples are archived under archive/legacy_eda_2026-09-15.
     """.format(DB_FILE, TABLE_NAME))
     
     print("\n📝 QUERY EXAMPLES:")

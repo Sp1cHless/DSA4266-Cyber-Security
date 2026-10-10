@@ -93,7 +93,7 @@ def load_buckets() -> pd.DataFrame:
     if not DB_PATH.exists():
         raise FileNotFoundError(
             f"SQLite database not found: {DB_PATH}\n"
-            "Run eda/upload_to_sqlite.py first."
+            "Run data_setup/import_unsw_to_sqlite.py first."
         )
 
     with sqlite3.connect(DB_PATH) as conn:
