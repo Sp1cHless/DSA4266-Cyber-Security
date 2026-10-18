@@ -1,0 +1,9 @@
+# Preserve CIC source hashes across branch switches on Windows.
+CIC_new/**/*.py text eol=lf
+CIC_new/**/*.mjs text eol=lf
+CIC_new/**/*.md text eol=lf
+CIC_new/**/*.json text eol=lf
+CIC_new/**/*.txt text eol=lf
+CIC_new/**/.gitignore text eol=lf
+CIC_new/.gitignore text eol=lf
+CIC_new/**/*.xlsx binary

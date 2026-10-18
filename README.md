@@ -1,5 +1,18 @@
 # DSA4266-Cyber-Security
 
+## Current branch: CIC-only prepared dataset
+
+This branch, `codex/cic-timeblock-buckets`, contains the CIC EDA, global-time-block split, event superposition,
+bucket features and final build reports. The completed dataset and existing Python environment are retained locally.
+No installation, download or bucket rebuild is needed on this machine:
+
+```powershell
+.\.venv-cnn\Scripts\python.exe CIC_new/load_dataset.py
+```
+
+See [CIC_new/README.md](CIC_new/README.md) for data loading, completed-run details and optional rebuilding.
+The older UNSW/CIC pilot paths below remain historical references.
+
 ## Project Layout
 
 ```text
@@ -77,6 +90,33 @@ Verify it without requiring the external SQLite command-line program:
 ```powershell
 python -c "import sqlite3; c=sqlite3.connect(r'datasets/network_traffic.db'); print(c.execute('SELECT COUNT(*) FROM network_flows').fetchone()[0]); c.close()"
 ```
+
+### Browse the databases in VS Code
+
+The workspace ships two SQLTools SQLite connections, declared in
+`.vscode/settings.json` (that file is local and not committed):
+
+```text
+CIC-IDS2018 (SQLite)   ->  datasets/cic_2018_traffic.db
+UNSW-NB15 (SQLite)     ->  datasets/network_traffic.db
+```
+
+Connect through the SQLTools view in the Activity Bar, or `Ctrl+Shift+P` ->
+`SQLTools: Connect`. Then open [`sql/cic_explore.sql`](sql/cic_explore.sql), put
+the cursor inside one statement and run it:
+
+```text
+Ctrl+E Ctrl+E    run the statement under the cursor, or the selection
+Ctrl+E Ctrl+S    inspect the records of the table under the cursor
+Ctrl+E Ctrl+D    show the DDL of the table under the cursor
+Ctrl+E Ctrl+B    format the SQL
+```
+
+`SQLTools: Run This File` from the Command Palette executes every statement in
+the file instead. Results open in the SQLTools Results tab, where they can be
+saved as CSV. The Oracle SQL Developer extension only connects to Oracle
+Database and cannot open these SQLite files; the SQLTools SQLite driver opens
+the file read-write, so keep to `SELECT` statements.
 
 ## Temporal EDA and Data Processing
 

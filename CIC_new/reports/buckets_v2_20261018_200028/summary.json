@@ -1,0 +1,4086 @@
+{
+  "metadata": {
+    "generated_at": "2026-10-18T20:23:56.662567+08:00",
+    "config": {
+      "pipeline_version": 2,
+      "source": {
+        "path": "D:\\Intern\\NUS\\DSA4266\\project\\DSA4266-Cyber-Security\\datasets\\cic_2018_traffic.db",
+        "bytes": 6574055424,
+        "mtime_ns": "1791617954482244800"
+      },
+      "code_sha256": {
+        "build_buckets.py": "fc75962a85b35c7244724775038e1d55f82ee634bd312f94e27740586e73ee8d",
+        "bucket_features.py": "e7e3c9b0276d7f9dfd28ee9b0875f9b142065c3c10506e3a25041b9d8a0827bd",
+        "split_policy.py": "02066b53d73d777264de708c0a8dd23c8f9318dd16bafa4a9525c14985da903c"
+      },
+      "seed": 4266,
+      "split_ratios": [
+        0.6,
+        0.2,
+        0.2
+      ],
+      "window_seconds": 100,
+      "bucket_seconds": 10,
+      "split_policy": {
+        "method": "global_15m_coverage_v2",
+        "block_seconds": 900,
+        "embargo_seconds": 100,
+        "target_ratios": [
+          0.6,
+          0.2,
+          0.2
+        ],
+        "coverage": "train all types; greedy feasible validation/test coverage; complete blocks only",
+        "balance": "original-count allocation plus three retained-ratio corrections; choose closest retained proportions, no model scores",
+        "evaluation": "same environment, held-out global time blocks; campaigns may recur"
+      },
+      "shard_sequences": 2048,
+      "donor_cache_mb": 128,
+      "reports_directory": "D:\\Intern\\NUS\\DSA4266\\project\\DSA4266-Cyber-Security\\CIC_new\\reports\\buckets_v2_20261018_200028"
+    },
+    "output_directory": "D:\\Intern\\NUS\\DSA4266\\project\\DSA4266-Cyber-Security\\CIC_new\\outputs\\buckets_v2_20261018_200028",
+    "report_directory": "D:\\Intern\\NUS\\DSA4266\\project\\DSA4266-Cyber-Security\\CIC_new\\reports\\buckets_v2_20261018_200028",
+    "python": "3.11.6",
+    "numpy": "2.4.6"
+  },
+  "controls": {
+    "flows": 20115529,
+    "attack_flows": 2600903,
+    "original_sequences": 1466665,
+    "invalid_required_rows": 0
+  },
+  "plan": {
+    "original_train_N": 765652,
+    "original_train_P": 8093,
+    "synthetic_positive": 8093,
+    "synthetic_negative": 8093,
+    "final_train": 781838,
+    "seed": 4267,
+    "attack_types": [
+      "Bot",
+      "Brute_Force_-Web",
+      "Brute_Force_-XSS",
+      "DDOS_attack-HOIC",
+      "DDOS_attack-LOIC-UDP",
+      "DDoS_attacks-LOIC-HTTP",
+      "DoS_attacks-GoldenEye",
+      "DoS_attacks-Hulk",
+      "DoS_attacks-SlowHTTPTest",
+      "DoS_attacks-Slowloris",
+      "FTP-BruteForce",
+      "Infilteration",
+      "SQL_Injection",
+      "SSH-Bruteforce"
+    ],
+    "background_density_bands": [
+      "1",
+      "2-4",
+      "5-10"
+    ],
+    "feature_count": 228,
+    "model_width_with_mask": 229
+  },
+  "schema": {
+    "version": 1,
+    "window_seconds": 100,
+    "bucket_seconds": 10,
+    "buckets_per_sequence": 10,
+    "numeric_feature_count": 82,
+    "l7_vocabulary": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      17,
+      18,
+      19,
+      20,
+      23,
+      25,
+      27,
+      28,
+      29,
+      31,
+      37,
+      40,
+      41,
+      43,
+      44,
+      50,
+      51,
+      53,
+      58,
+      60,
+      62,
+      64,
+      65,
+      72,
+      74,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      85,
+      88,
+      89,
+      91,
+      92,
+      95,
+      96,
+      97,
+      100,
+      102,
+      103,
+      111,
+      112,
+      114,
+      115,
+      129,
+      131,
+      132,
+      138,
+      139,
+      144,
+      146,
+      148,
+      150,
+      151,
+      152,
+      153,
+      154,
+      158,
+      159,
+      161,
+      162,
+      164,
+      166,
+      167,
+      168,
+      170,
+      172,
+      174,
+      175,
+      182,
+      185,
+      188,
+      190,
+      196,
+      213,
+      214,
+      222,
+      226,
+      229,
+      237,
+      243,
+      244,
+      245,
+      248,
+      251,
+      259,
+      260,
+      264,
+      265,
+      274,
+      276,
+      278,
+      284,
+      285,
+      294,
+      308,
+      312,
+      329,
+      331,
+      332,
+      333,
+      334,
+      335,
+      343,
+      347,
+      351,
+      354,
+      359,
+      360,
+      362,
+      363,
+      365,
+      367,
+      370,
+      372,
+      374,
+      377,
+      378,
+      379,
+      380,
+      381,
+      383,
+      390,
+      391,
+      393,
+      394,
+      397,
+      401
+    ],
+    "l7_ratio_count": 146,
+    "feature_names": [
+      "flow_count",
+      "in_bytes_sum",
+      "out_bytes_sum",
+      "in_pkts_sum",
+      "out_pkts_sum",
+      "duration_mean",
+      "duration_min",
+      "duration_max",
+      "protocol_tcp_ratio",
+      "protocol_udp_ratio",
+      "protocol_other_ratio",
+      "protocol_nunique",
+      "l7_proto_nunique",
+      "l7_top1_ratio",
+      "l7_entropy",
+      "src_port_nunique",
+      "src_port_reuse_ratio",
+      "src_port_top1_ratio",
+      "src_port_entropy",
+      "dst_port_nunique",
+      "dst_port_reuse_ratio",
+      "dst_port_top1_ratio",
+      "dst_port_entropy",
+      "tcp_flag_fin_ratio",
+      "tcp_flag_syn_ratio",
+      "tcp_flag_rst_ratio",
+      "tcp_flag_psh_ratio",
+      "tcp_flag_ack_ratio",
+      "tcp_flag_urg_ratio",
+      "tcp_flag_ece_ratio",
+      "tcp_flag_cwr_ratio",
+      "client_tcp_flag_fin_ratio",
+      "client_tcp_flag_syn_ratio",
+      "client_tcp_flag_rst_ratio",
+      "client_tcp_flag_psh_ratio",
+      "client_tcp_flag_ack_ratio",
+      "client_tcp_flag_urg_ratio",
+      "client_tcp_flag_ece_ratio",
+      "client_tcp_flag_cwr_ratio",
+      "server_tcp_flag_fin_ratio",
+      "server_tcp_flag_syn_ratio",
+      "server_tcp_flag_rst_ratio",
+      "server_tcp_flag_psh_ratio",
+      "server_tcp_flag_ack_ratio",
+      "server_tcp_flag_ece_ratio",
+      "server_tcp_flag_cwr_ratio",
+      "icmp_flow_ratio",
+      "icmp_type_nunique",
+      "icmp_type_top1_ratio",
+      "icmp_type_entropy",
+      "dns_flow_ratio",
+      "dns_query_type_nunique",
+      "dns_query_type_top1_ratio",
+      "dns_query_type_entropy",
+      "dst_ip_nunique",
+      "dst_ip_reuse_ratio",
+      "dst_ip_top1_ratio",
+      "dst_ip_entropy",
+      "duration_in_mean",
+      "duration_in_max",
+      "duration_out_mean",
+      "duration_out_max",
+      "min_ip_pkt_len_min",
+      "min_ip_pkt_len_mean",
+      "max_ip_pkt_len_mean",
+      "max_ip_pkt_len_max",
+      "retransmitted_in_bytes_sum",
+      "retransmitted_in_pkts_sum",
+      "retransmitted_out_bytes_sum",
+      "retransmitted_out_pkts_sum",
+      "num_pkts_up_to_128_bytes_ratio",
+      "num_pkts_128_to_256_bytes_ratio",
+      "num_pkts_256_to_512_bytes_ratio",
+      "num_pkts_512_to_1024_bytes_ratio",
+      "num_pkts_1024_to_1514_bytes_ratio",
+      "tcp_win_max_in_mean",
+      "tcp_win_max_in_max",
+      "tcp_win_max_out_mean",
+      "tcp_win_max_out_max",
+      "flow_start_gap_mean_ms",
+      "flow_start_gap_max_ms",
+      "flow_start_span_ms",
+      "l7_code_0_ratio",
+      "l7_code_1_ratio",
+      "l7_code_2_ratio",
+      "l7_code_3_ratio",
+      "l7_code_4_ratio",
+      "l7_code_5_ratio",
+      "l7_code_7_ratio",
+      "l7_code_8_ratio",
+      "l7_code_9_ratio",
+      "l7_code_10_ratio",
+      "l7_code_11_ratio",
+      "l7_code_12_ratio",
+      "l7_code_13_ratio",
+      "l7_code_14_ratio",
+      "l7_code_15_ratio",
+      "l7_code_17_ratio",
+      "l7_code_18_ratio",
+      "l7_code_19_ratio",
+      "l7_code_20_ratio",
+      "l7_code_23_ratio",
+      "l7_code_25_ratio",
+      "l7_code_27_ratio",
+      "l7_code_28_ratio",
+      "l7_code_29_ratio",
+      "l7_code_31_ratio",
+      "l7_code_37_ratio",
+      "l7_code_40_ratio",
+      "l7_code_41_ratio",
+      "l7_code_43_ratio",
+      "l7_code_44_ratio",
+      "l7_code_50_ratio",
+      "l7_code_51_ratio",
+      "l7_code_53_ratio",
+      "l7_code_58_ratio",
+      "l7_code_60_ratio",
+      "l7_code_62_ratio",
+      "l7_code_64_ratio",
+      "l7_code_65_ratio",
+      "l7_code_72_ratio",
+      "l7_code_74_ratio",
+      "l7_code_77_ratio",
+      "l7_code_78_ratio",
+      "l7_code_79_ratio",
+      "l7_code_80_ratio",
+      "l7_code_81_ratio",
+      "l7_code_82_ratio",
+      "l7_code_85_ratio",
+      "l7_code_88_ratio",
+      "l7_code_89_ratio",
+      "l7_code_91_ratio",
+      "l7_code_92_ratio",
+      "l7_code_95_ratio",
+      "l7_code_96_ratio",
+      "l7_code_97_ratio",
+      "l7_code_100_ratio",
+      "l7_code_102_ratio",
+      "l7_code_103_ratio",
+      "l7_code_111_ratio",
+      "l7_code_112_ratio",
+      "l7_code_114_ratio",
+      "l7_code_115_ratio",
+      "l7_code_129_ratio",
+      "l7_code_131_ratio",
+      "l7_code_132_ratio",
+      "l7_code_138_ratio",
+      "l7_code_139_ratio",
+      "l7_code_144_ratio",
+      "l7_code_146_ratio",
+      "l7_code_148_ratio",
+      "l7_code_150_ratio",
+      "l7_code_151_ratio",
+      "l7_code_152_ratio",
+      "l7_code_153_ratio",
+      "l7_code_154_ratio",
+      "l7_code_158_ratio",
+      "l7_code_159_ratio",
+      "l7_code_161_ratio",
+      "l7_code_162_ratio",
+      "l7_code_164_ratio",
+      "l7_code_166_ratio",
+      "l7_code_167_ratio",
+      "l7_code_168_ratio",
+      "l7_code_170_ratio",
+      "l7_code_172_ratio",
+      "l7_code_174_ratio",
+      "l7_code_175_ratio",
+      "l7_code_182_ratio",
+      "l7_code_185_ratio",
+      "l7_code_188_ratio",
+      "l7_code_190_ratio",
+      "l7_code_196_ratio",
+      "l7_code_213_ratio",
+      "l7_code_214_ratio",
+      "l7_code_222_ratio",
+      "l7_code_226_ratio",
+      "l7_code_229_ratio",
+      "l7_code_237_ratio",
+      "l7_code_243_ratio",
+      "l7_code_244_ratio",
+      "l7_code_245_ratio",
+      "l7_code_248_ratio",
+      "l7_code_251_ratio",
+      "l7_code_259_ratio",
+      "l7_code_260_ratio",
+      "l7_code_264_ratio",
+      "l7_code_265_ratio",
+      "l7_code_274_ratio",
+      "l7_code_276_ratio",
+      "l7_code_278_ratio",
+      "l7_code_284_ratio",
+      "l7_code_285_ratio",
+      "l7_code_294_ratio",
+      "l7_code_308_ratio",
+      "l7_code_312_ratio",
+      "l7_code_329_ratio",
+      "l7_code_331_ratio",
+      "l7_code_332_ratio",
+      "l7_code_333_ratio",
+      "l7_code_334_ratio",
+      "l7_code_335_ratio",
+      "l7_code_343_ratio",
+      "l7_code_347_ratio",
+      "l7_code_351_ratio",
+      "l7_code_354_ratio",
+      "l7_code_359_ratio",
+      "l7_code_360_ratio",
+      "l7_code_362_ratio",
+      "l7_code_363_ratio",
+      "l7_code_365_ratio",
+      "l7_code_367_ratio",
+      "l7_code_370_ratio",
+      "l7_code_372_ratio",
+      "l7_code_374_ratio",
+      "l7_code_377_ratio",
+      "l7_code_378_ratio",
+      "l7_code_379_ratio",
+      "l7_code_380_ratio",
+      "l7_code_381_ratio",
+      "l7_code_383_ratio",
+      "l7_code_390_ratio",
+      "l7_code_391_ratio",
+      "l7_code_393_ratio",
+      "l7_code_394_ratio",
+      "l7_code_397_ratio",
+      "l7_code_401_ratio",
+      "l7_UNK_ratio"
+    ],
+    "feature_count": 228,
+    "mask_separate": true,
+    "model_width_with_mask": 229,
+    "log1p_columns": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      11,
+      12,
+      15,
+      19,
+      47,
+      51,
+      54,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81
+    ],
+    "category_rule": "L7 ratios use training vocabulary plus UNK; diversity uses original codes",
+    "normalization_population": "original training nonempty buckets only",
+    "flag_denominator": "TCP flow count",
+    "dns_predicate": "query_id != 0 OR query_type != 0 OR answer_ttl != 0"
+  },
+  "scaler_active_buckets": 1958143,
+  "split_notes": {
+    "method": "global_15m_coverage_v2",
+    "block_seconds": 900,
+    "embargo_seconds": 100,
+    "target_ratios": [
+      0.6,
+      0.2,
+      0.2
+    ],
+    "coverage": [
+      {
+        "attack_type": "Bot",
+        "original_blocks": 23,
+        "train_sequences": 1219,
+        "train_attack_flows": 146850,
+        "validation_sequences": 56,
+        "validation_attack_flows": 21591,
+        "test_sequences": 49,
+        "test_attack_flows": 18866,
+        "excluded_sequences": 63,
+        "excluded_attack_flows": 20396,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "Brute_Force_-Web",
+        "original_blocks": 37,
+        "train_sequences": 841,
+        "train_attack_flows": 1038,
+        "validation_sequences": 181,
+        "validation_attack_flows": 275,
+        "test_sequences": 166,
+        "test_attack_flows": 191,
+        "excluded_sequences": 107,
+        "excluded_attack_flows": 114,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "Brute_Force_-XSS",
+        "original_blocks": 37,
+        "train_sequences": 253,
+        "train_attack_flows": 270,
+        "validation_sequences": 55,
+        "validation_attack_flows": 62,
+        "test_sequences": 70,
+        "test_attack_flows": 77,
+        "excluded_sequences": 64,
+        "excluded_attack_flows": 71,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "DDOS_attack-HOIC",
+        "original_blocks": 5,
+        "train_sequences": 81,
+        "train_attack_flows": 193295,
+        "validation_sequences": 94,
+        "validation_attack_flows": 288963,
+        "test_sequences": 65,
+        "test_attack_flows": 216684,
+        "excluded_sequences": 100,
+        "excluded_attack_flows": 333369,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "DDOS_attack-LOIC-UDP",
+        "original_blocks": 3,
+        "train_sequences": 60,
+        "train_attack_flows": 1094,
+        "validation_sequences": 54,
+        "validation_attack_flows": 1000,
+        "test_sequences": 14,
+        "test_attack_flows": 280,
+        "excluded_sequences": 60,
+        "excluded_attack_flows": 1076,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "DDoS_attacks-LOIC-HTTP",
+        "original_blocks": 9,
+        "train_sequences": 141,
+        "train_attack_flows": 98859,
+        "validation_sequences": 64,
+        "validation_attack_flows": 47381,
+        "test_sequences": 110,
+        "test_attack_flows": 47203,
+        "excluded_sequences": 156,
+        "excluded_attack_flows": 95146,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "DoS_attacks-GoldenEye",
+        "original_blocks": 4,
+        "train_sequences": 6,
+        "train_attack_flows": 32860,
+        "validation_sequences": 2,
+        "validation_attack_flows": 2072,
+        "test_sequences": 6,
+        "test_attack_flows": 26368,
+        "excluded_sequences": 0,
+        "excluded_attack_flows": 0,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "DoS_attacks-Hulk",
+        "original_blocks": 1,
+        "train_sequences": 6,
+        "train_attack_flows": 75640,
+        "validation_sequences": 0,
+        "validation_attack_flows": 0,
+        "test_sequences": 0,
+        "test_attack_flows": 0,
+        "excluded_sequences": 3,
+        "excluded_attack_flows": 24436,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "DoS_attacks-SlowHTTPTest",
+        "original_blocks": 5,
+        "train_sequences": 13,
+        "train_attack_flows": 39170,
+        "validation_sequences": 7,
+        "validation_attack_flows": 23240,
+        "test_sequences": 7,
+        "test_attack_flows": 23220,
+        "excluded_sequences": 6,
+        "excluded_attack_flows": 19920,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "DoS_attacks-Slowloris",
+        "original_blocks": 3,
+        "train_sequences": 6,
+        "train_attack_flows": 8914,
+        "validation_sequences": 16,
+        "validation_attack_flows": 22810,
+        "test_sequences": 0,
+        "test_attack_flows": 0,
+        "excluded_sequences": 3,
+        "excluded_attack_flows": 4316,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "FTP-BruteForce",
+        "original_blocks": 7,
+        "train_sequences": 31,
+        "train_attack_flows": 205360,
+        "validation_sequences": 15,
+        "validation_attack_flows": 95060,
+        "test_sequences": 7,
+        "test_attack_flows": 46460,
+        "excluded_sequences": 6,
+        "excluded_attack_flows": 39840,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "Infilteration",
+        "original_blocks": 77,
+        "train_sequences": 5468,
+        "train_attack_flows": 157788,
+        "validation_sequences": 366,
+        "validation_attack_flows": 9509,
+        "test_sequences": 334,
+        "test_attack_flows": 6561,
+        "excluded_sequences": 466,
+        "excluded_attack_flows": 14294,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "SQL_Injection",
+        "original_blocks": 22,
+        "train_sequences": 180,
+        "train_attack_flows": 217,
+        "validation_sequences": 50,
+        "validation_attack_flows": 55,
+        "test_sequences": 84,
+        "test_attack_flows": 88,
+        "excluded_sequences": 74,
+        "excluded_attack_flows": 80,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      },
+      {
+        "attack_type": "SSH-Bruteforce",
+        "original_blocks": 7,
+        "train_sequences": 30,
+        "train_attack_flows": 103548,
+        "validation_sequences": 10,
+        "validation_attack_flows": 32984,
+        "test_sequences": 6,
+        "test_attack_flows": 20756,
+        "excluded_sequences": 10,
+        "excluded_attack_flows": 31186,
+        "validation_unseen_in_train": false,
+        "test_unseen_in_train": false
+      }
+    ],
+    "balance": "original-count allocation plus three retained-ratio corrections; choose closest retained proportions, no model scores",
+    "evaluation": "same environment, held-out global time blocks; campaigns may recur",
+    "seed": 4266,
+    "original_sequences": 1466665,
+    "observed_blocks": 504,
+    "assigned_blocks": {
+      "train": 245,
+      "validation": 129,
+      "test": 130
+    },
+    "sequences_before_purge": {
+      "train": 833280,
+      "validation": 313657,
+      "test": 319728
+    },
+    "retained_sequences": {
+      "train": 765652,
+      "validation": 251146,
+      "test": 263125
+    },
+    "retained_positive_sequences": {
+      "train": 8093,
+      "validation": 917,
+      "test": 851
+    },
+    "excluded_sequences": 186742,
+    "excluded_positive_sequences": 1057,
+    "embargo_exclusions": 186742,
+    "interval_exclusions": 24468,
+    "fold_transitions": 276,
+    "shared_global_100s": 0,
+    "retained_balance_attempts": [
+      {
+        "pass": 0,
+        "retained_sequences": [
+          817697,
+          242316,
+          233416
+        ],
+        "squared_ratio_error": 0.0015782754378365123
+      },
+      {
+        "pass": 1,
+        "retained_sequences": [
+          764825,
+          253700,
+          268724
+        ],
+        "squared_ratio_error": 0.00011936269694946445
+      },
+      {
+        "pass": 2,
+        "retained_sequences": [
+          773184,
+          257980,
+          248043
+        ],
+        "squared_ratio_error": 5.9535408180332326e-05
+      },
+      {
+        "pass": 3,
+        "retained_sequences": [
+          765652,
+          251146,
+          263125
+        ],
+        "squared_ratio_error": 4.864821448217979e-05
+      }
+    ],
+    "retained_interval_overlap_sequences": 0,
+    "adjacent_source_pairs_cross_split": 0,
+    "unreserved_coverage_requests": [
+      {
+        "attack_type": "DoS_attacks-Hulk",
+        "split": "validation",
+        "reason": "No witness footprint fits existing coverage reservations"
+      },
+      {
+        "attack_type": "DoS_attacks-Hulk",
+        "split": "test",
+        "reason": "No witness footprint fits existing coverage reservations"
+      },
+      {
+        "attack_type": "DoS_attacks-Slowloris",
+        "split": "test",
+        "reason": "No witness footprint fits existing coverage reservations"
+      }
+    ],
+    "coverage_reservations": [
+      {
+        "purpose": "DoS_attacks-Hulk",
+        "split": "train",
+        "block_starts_ms": [
+          1518802200000,
+          1518803100000
+        ],
+        "sequence_id": 692229
+      },
+      {
+        "purpose": "DDOS_attack-LOIC-UDP",
+        "split": "train",
+        "block_starts_ms": [
+          1519223400000
+        ],
+        "sequence_id": 692151
+      },
+      {
+        "purpose": "DoS_attacks-Slowloris",
+        "split": "train",
+        "block_starts_ms": [
+          1518708600000
+        ],
+        "sequence_id": 691321
+      },
+      {
+        "purpose": "DoS_attacks-GoldenEye",
+        "split": "train",
+        "block_starts_ms": [
+          1518702300000
+        ],
+        "sequence_id": 692247
+      },
+      {
+        "purpose": "DDOS_attack-HOIC",
+        "split": "train",
+        "block_starts_ms": [
+          1519236000000
+        ],
+        "sequence_id": 691161
+      },
+      {
+        "purpose": "DoS_attacks-SlowHTTPTest",
+        "split": "train",
+        "block_starts_ms": [
+          1518790500000
+        ],
+        "sequence_id": 173231
+      },
+      {
+        "purpose": "FTP-BruteForce",
+        "split": "train",
+        "block_starts_ms": [
+          1518618600000
+        ],
+        "sequence_id": 696982
+      },
+      {
+        "purpose": "SSH-Bruteforce",
+        "split": "train",
+        "block_starts_ms": [
+          1518631200000,
+          1518632100000
+        ],
+        "sequence_id": 173180
+      },
+      {
+        "purpose": "DDoS_attacks-LOIC-HTTP",
+        "split": "train",
+        "block_starts_ms": [
+          1519135200000,
+          1519136100000
+        ],
+        "sequence_id": 1229160
+      },
+      {
+        "purpose": "SQL_Injection",
+        "split": "train",
+        "block_starts_ms": [
+          1519330500000
+        ],
+        "sequence_id": 691796
+      },
+      {
+        "purpose": "Bot",
+        "split": "train",
+        "block_starts_ms": [
+          1520002800000
+        ],
+        "sequence_id": 642453
+      },
+      {
+        "purpose": "Brute_Force_-Web",
+        "split": "train",
+        "block_starts_ms": [
+          1519317900000
+        ],
+        "sequence_id": 1221478
+      },
+      {
+        "purpose": "Brute_Force_-XSS",
+        "split": "train",
+        "block_starts_ms": [
+          1519301700000
+        ],
+        "sequence_id": 1229401
+      },
+      {
+        "purpose": "Infilteration",
+        "split": "train",
+        "block_starts_ms": [
+          1519913700000,
+          1519914600000
+        ],
+        "sequence_id": 622095
+      },
+      {
+        "purpose": "pure-benign donor source",
+        "split": "train",
+        "block_starts_ms": [
+          1519134300000,
+          1519135200000
+        ],
+        "sequence_id": 1044
+      },
+      {
+        "purpose": "pure-benign donor source",
+        "split": "train",
+        "block_starts_ms": [
+          1519134300000,
+          1519135200000
+        ],
+        "sequence_id": 4155
+      },
+      {
+        "purpose": "DDOS_attack-LOIC-UDP",
+        "split": "test",
+        "block_starts_ms": [
+          1519221600000
+        ],
+        "sequence_id": 691142
+      },
+      {
+        "purpose": "DDOS_attack-LOIC-UDP",
+        "split": "validation",
+        "block_starts_ms": [
+          1519222500000
+        ],
+        "sequence_id": 691147
+      },
+      {
+        "purpose": "DoS_attacks-Slowloris",
+        "split": "validation",
+        "block_starts_ms": [
+          1518706800000,
+          1518707700000
+        ],
+        "sequence_id": 691307
+      },
+      {
+        "purpose": "DoS_attacks-GoldenEye",
+        "split": "test",
+        "block_starts_ms": [
+          1518700500000,
+          1518701400000
+        ],
+        "sequence_id": 692239
+      },
+      {
+        "purpose": "DoS_attacks-GoldenEye",
+        "split": "validation",
+        "block_starts_ms": [
+          1518703200000
+        ],
+        "sequence_id": 692251
+      },
+      {
+        "purpose": "DDOS_attack-HOIC",
+        "split": "validation",
+        "block_starts_ms": [
+          1519236900000
+        ],
+        "sequence_id": 691700
+      },
+      {
+        "purpose": "DDOS_attack-HOIC",
+        "split": "test",
+        "block_starts_ms": [
+          1519237800000
+        ],
+        "sequence_id": 691710
+      },
+      {
+        "purpose": "DoS_attacks-SlowHTTPTest",
+        "split": "test",
+        "block_starts_ms": [
+          1518792300000
+        ],
+        "sequence_id": 173250
+      },
+      {
+        "purpose": "DoS_attacks-SlowHTTPTest",
+        "split": "validation",
+        "block_starts_ms": [
+          1518791400000
+        ],
+        "sequence_id": 173241
+      },
+      {
+        "purpose": "FTP-BruteForce",
+        "split": "validation",
+        "block_starts_ms": [
+          1518623100000
+        ],
+        "sequence_id": 697029
+      },
+      {
+        "purpose": "FTP-BruteForce",
+        "split": "test",
+        "block_starts_ms": [
+          1518621300000
+        ],
+        "sequence_id": 697011
+      },
+      {
+        "purpose": "SSH-Bruteforce",
+        "split": "test",
+        "block_starts_ms": [
+          1518633900000
+        ],
+        "sequence_id": 173203
+      },
+      {
+        "purpose": "SSH-Bruteforce",
+        "split": "validation",
+        "block_starts_ms": [
+          1518635700000
+        ],
+        "sequence_id": 173222
+      },
+      {
+        "purpose": "DDoS_attacks-LOIC-HTTP",
+        "split": "validation",
+        "block_starts_ms": [
+          1519137900000
+        ],
+        "sequence_id": 691548
+      },
+      {
+        "purpose": "DDoS_attacks-LOIC-HTTP",
+        "split": "test",
+        "block_starts_ms": [
+          1519137000000
+        ],
+        "sequence_id": 691208
+      },
+      {
+        "purpose": "SQL_Injection",
+        "split": "test",
+        "block_starts_ms": [
+          1519329600000
+        ],
+        "sequence_id": 171699
+      },
+      {
+        "purpose": "SQL_Injection",
+        "split": "validation",
+        "block_starts_ms": [
+          1519322400000
+        ],
+        "sequence_id": 691777
+      },
+      {
+        "purpose": "Bot",
+        "split": "validation",
+        "block_starts_ms": [
+          1520003700000
+        ],
+        "sequence_id": 617235
+      },
+      {
+        "purpose": "Bot",
+        "split": "test",
+        "block_starts_ms": [
+          1520019000000
+        ],
+        "sequence_id": 624643
+      },
+      {
+        "purpose": "Brute_Force_-Web",
+        "split": "test",
+        "block_starts_ms": [
+          1519331400000
+        ],
+        "sequence_id": 1355785
+      },
+      {
+        "purpose": "Brute_Force_-Web",
+        "split": "validation",
+        "block_starts_ms": [
+          1519325100000
+        ],
+        "sequence_id": 920299
+      },
+      {
+        "purpose": "Brute_Force_-XSS",
+        "split": "validation",
+        "block_starts_ms": [
+          1519322400000
+        ],
+        "sequence_id": 635019
+      },
+      {
+        "purpose": "Brute_Force_-XSS",
+        "split": "test",
+        "block_starts_ms": [
+          1519331400000
+        ],
+        "sequence_id": 635111
+      },
+      {
+        "purpose": "Infilteration",
+        "split": "test",
+        "block_starts_ms": [
+          1519930800000
+        ],
+        "sequence_id": 619936
+      },
+      {
+        "purpose": "Infilteration",
+        "split": "validation",
+        "block_starts_ms": [
+          1519830000000
+        ],
+        "sequence_id": 633018
+      }
+    ],
+    "duplicate_record_scope": "Identical complete raw records have the same source IP/start and therefore the same original window. No within-window duplicate removal or session/campaign independence claim.",
+    "ratios_denominator": "original retained sequences, before augmentation; 60/20/20 is approximate after purge",
+    "excluded_flows": 3543806,
+    "excluded_attack_flows": 584244,
+    "original_composition": [
+      {
+        "split": "train",
+        "sequences": 765652,
+        "positive_sequences": 8093,
+        "flows": 10088418,
+        "attack_flows": 1064903,
+        "sources": 118454
+      },
+      {
+        "split": "validation",
+        "sequences": 251146,
+        "positive_sequences": 917,
+        "flows": 3224641,
+        "attack_flows": 545002,
+        "sources": 56659
+      },
+      {
+        "split": "test",
+        "sequences": 263125,
+        "positive_sequences": 851,
+        "flows": 3258664,
+        "attack_flows": 406754,
+        "sources": 57802
+      },
+      {
+        "split": "excluded",
+        "sequences": 186742,
+        "positive_sequences": 1057,
+        "flows": 3543806,
+        "attack_flows": 584244,
+        "sources": 44545
+      }
+    ]
+  },
+  "composition": [
+    {
+      "split": "test",
+      "sample_type": "real_benign",
+      "sequences": 262274,
+      "positive_sequences": 0,
+      "bucket_positions": 2622740,
+      "flow_presentations": 2844111,
+      "attack_flow_presentations": 0,
+      "active_buckets": 618219,
+      "mean_occupancy": 0.2357149393382493,
+      "mixed_buckets": 0
+    },
+    {
+      "split": "test",
+      "sample_type": "real_malicious",
+      "sequences": 851,
+      "positive_sequences": 851,
+      "bucket_positions": 8510,
+      "flow_presentations": 414553,
+      "attack_flow_presentations": 406754,
+      "active_buckets": 3708,
+      "mean_occupancy": 0.43572267920094004,
+      "mixed_buckets": 380
+    },
+    {
+      "split": "train",
+      "sample_type": "real_benign",
+      "sequences": 757559,
+      "positive_sequences": 0,
+      "bucket_positions": 7575590,
+      "flow_presentations": 8860535,
+      "attack_flow_presentations": 0,
+      "active_buckets": 1919233,
+      "mean_occupancy": 0.2533443599772427,
+      "mixed_buckets": 0
+    },
+    {
+      "split": "train",
+      "sample_type": "real_malicious",
+      "sequences": 8093,
+      "positive_sequences": 8093,
+      "bucket_positions": 80930,
+      "flow_presentations": 1227883,
+      "attack_flow_presentations": 1064903,
+      "active_buckets": 38910,
+      "mean_occupancy": 0.48078586432719633,
+      "mixed_buckets": 7370
+    },
+    {
+      "split": "train",
+      "sample_type": "synthetic_benign",
+      "sequences": 8093,
+      "positive_sequences": 0,
+      "bucket_positions": 80930,
+      "flow_presentations": 193699,
+      "attack_flow_presentations": 0,
+      "active_buckets": 43015,
+      "mean_occupancy": 0.5315087112319288,
+      "mixed_buckets": 0
+    },
+    {
+      "split": "train",
+      "sample_type": "synthetic_malicious",
+      "sequences": 8093,
+      "positive_sequences": 8093,
+      "bucket_positions": 80930,
+      "flow_presentations": 20860542,
+      "attack_flow_presentations": 20754165,
+      "active_buckets": 62320,
+      "mean_occupancy": 0.7700481897936489,
+      "mixed_buckets": 17011
+    },
+    {
+      "split": "validation",
+      "sample_type": "real_benign",
+      "sequences": 250229,
+      "positive_sequences": 0,
+      "bucket_positions": 2502290,
+      "flow_presentations": 2668420,
+      "attack_flow_presentations": 0,
+      "active_buckets": 576808,
+      "mean_occupancy": 0.23051205096131944,
+      "mixed_buckets": 0
+    },
+    {
+      "split": "validation",
+      "sample_type": "real_malicious",
+      "sequences": 917,
+      "positive_sequences": 917,
+      "bucket_positions": 9170,
+      "flow_presentations": 556221,
+      "attack_flow_presentations": 545002,
+      "active_buckets": 4528,
+      "mean_occupancy": 0.4937840785169029,
+      "mixed_buckets": 455
+    }
+  ],
+  "attacks": [
+    {
+      "attack_type": "Bot",
+      "split": "train",
+      "real_sequences": 1219,
+      "real_sources": 8,
+      "real_attack_flows": 146850,
+      "synthetic_selected": 591,
+      "synthetic_containing": 591
+    },
+    {
+      "attack_type": "Bot",
+      "split": "validation",
+      "real_sequences": 56,
+      "real_sources": 8,
+      "real_attack_flows": 21591,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "Bot",
+      "split": "test",
+      "real_sequences": 49,
+      "real_sources": 7,
+      "real_attack_flows": 18866,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "Brute_Force_-Web",
+      "split": "train",
+      "real_sequences": 841,
+      "real_sources": 380,
+      "real_attack_flows": 1038,
+      "synthetic_selected": 572,
+      "synthetic_containing": 777
+    },
+    {
+      "attack_type": "Brute_Force_-Web",
+      "split": "validation",
+      "real_sequences": 181,
+      "real_sources": 105,
+      "real_attack_flows": 275,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "Brute_Force_-Web",
+      "split": "test",
+      "real_sequences": 166,
+      "real_sources": 114,
+      "real_attack_flows": 191,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "Brute_Force_-XSS",
+      "split": "train",
+      "real_sequences": 253,
+      "real_sources": 4,
+      "real_attack_flows": 270,
+      "synthetic_selected": 555,
+      "synthetic_containing": 898
+    },
+    {
+      "attack_type": "Brute_Force_-XSS",
+      "split": "validation",
+      "real_sequences": 55,
+      "real_sources": 4,
+      "real_attack_flows": 62,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "Brute_Force_-XSS",
+      "split": "test",
+      "real_sequences": 70,
+      "real_sources": 4,
+      "real_attack_flows": 77,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DDOS_attack-HOIC",
+      "split": "train",
+      "real_sequences": 81,
+      "real_sources": 10,
+      "real_attack_flows": 193295,
+      "synthetic_selected": 545,
+      "synthetic_containing": 545
+    },
+    {
+      "attack_type": "DDOS_attack-HOIC",
+      "split": "validation",
+      "real_sequences": 94,
+      "real_sources": 10,
+      "real_attack_flows": 288963,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DDOS_attack-HOIC",
+      "split": "test",
+      "real_sequences": 65,
+      "real_sources": 10,
+      "real_attack_flows": 216684,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DDOS_attack-LOIC-UDP",
+      "split": "train",
+      "real_sequences": 60,
+      "real_sources": 10,
+      "real_attack_flows": 1094,
+      "synthetic_selected": 578,
+      "synthetic_containing": 578
+    },
+    {
+      "attack_type": "DDOS_attack-LOIC-UDP",
+      "split": "validation",
+      "real_sequences": 54,
+      "real_sources": 10,
+      "real_attack_flows": 1000,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DDOS_attack-LOIC-UDP",
+      "split": "test",
+      "real_sequences": 14,
+      "real_sources": 10,
+      "real_attack_flows": 280,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DDoS_attacks-LOIC-HTTP",
+      "split": "train",
+      "real_sequences": 141,
+      "real_sources": 10,
+      "real_attack_flows": 98859,
+      "synthetic_selected": 589,
+      "synthetic_containing": 589
+    },
+    {
+      "attack_type": "DDoS_attacks-LOIC-HTTP",
+      "split": "validation",
+      "real_sequences": 64,
+      "real_sources": 10,
+      "real_attack_flows": 47381,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DDoS_attacks-LOIC-HTTP",
+      "split": "test",
+      "real_sequences": 110,
+      "real_sources": 10,
+      "real_attack_flows": 47203,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DoS_attacks-GoldenEye",
+      "split": "train",
+      "real_sequences": 6,
+      "real_sources": 1,
+      "real_attack_flows": 32860,
+      "synthetic_selected": 562,
+      "synthetic_containing": 562
+    },
+    {
+      "attack_type": "DoS_attacks-GoldenEye",
+      "split": "validation",
+      "real_sequences": 2,
+      "real_sources": 1,
+      "real_attack_flows": 2072,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DoS_attacks-GoldenEye",
+      "split": "test",
+      "real_sequences": 6,
+      "real_sources": 1,
+      "real_attack_flows": 26368,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DoS_attacks-Hulk",
+      "split": "train",
+      "real_sequences": 6,
+      "real_sources": 1,
+      "real_attack_flows": 75640,
+      "synthetic_selected": 583,
+      "synthetic_containing": 583
+    },
+    {
+      "attack_type": "DoS_attacks-Hulk",
+      "split": "validation",
+      "real_sequences": 0,
+      "real_sources": 0,
+      "real_attack_flows": 0,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DoS_attacks-Hulk",
+      "split": "test",
+      "real_sequences": 0,
+      "real_sources": 0,
+      "real_attack_flows": 0,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DoS_attacks-SlowHTTPTest",
+      "split": "train",
+      "real_sequences": 13,
+      "real_sources": 1,
+      "real_attack_flows": 39170,
+      "synthetic_selected": 599,
+      "synthetic_containing": 599
+    },
+    {
+      "attack_type": "DoS_attacks-SlowHTTPTest",
+      "split": "validation",
+      "real_sequences": 7,
+      "real_sources": 1,
+      "real_attack_flows": 23240,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DoS_attacks-SlowHTTPTest",
+      "split": "test",
+      "real_sequences": 7,
+      "real_sources": 1,
+      "real_attack_flows": 23220,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DoS_attacks-Slowloris",
+      "split": "train",
+      "real_sequences": 6,
+      "real_sources": 1,
+      "real_attack_flows": 8914,
+      "synthetic_selected": 602,
+      "synthetic_containing": 602
+    },
+    {
+      "attack_type": "DoS_attacks-Slowloris",
+      "split": "validation",
+      "real_sequences": 16,
+      "real_sources": 1,
+      "real_attack_flows": 22810,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "DoS_attacks-Slowloris",
+      "split": "test",
+      "real_sequences": 0,
+      "real_sources": 0,
+      "real_attack_flows": 0,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "FTP-BruteForce",
+      "split": "train",
+      "real_sequences": 31,
+      "real_sources": 1,
+      "real_attack_flows": 205360,
+      "synthetic_selected": 580,
+      "synthetic_containing": 580
+    },
+    {
+      "attack_type": "FTP-BruteForce",
+      "split": "validation",
+      "real_sequences": 15,
+      "real_sources": 1,
+      "real_attack_flows": 95060,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "FTP-BruteForce",
+      "split": "test",
+      "real_sequences": 7,
+      "real_sources": 1,
+      "real_attack_flows": 46460,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "Infilteration",
+      "split": "train",
+      "real_sequences": 5468,
+      "real_sources": 551,
+      "real_attack_flows": 157788,
+      "synthetic_selected": 547,
+      "synthetic_containing": 547
+    },
+    {
+      "attack_type": "Infilteration",
+      "split": "validation",
+      "real_sequences": 366,
+      "real_sources": 43,
+      "real_attack_flows": 9509,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "Infilteration",
+      "split": "test",
+      "real_sequences": 334,
+      "real_sources": 63,
+      "real_attack_flows": 6561,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "SQL_Injection",
+      "split": "train",
+      "real_sequences": 180,
+      "real_sources": 4,
+      "real_attack_flows": 217,
+      "synthetic_selected": 597,
+      "synthetic_containing": 816
+    },
+    {
+      "attack_type": "SQL_Injection",
+      "split": "validation",
+      "real_sequences": 50,
+      "real_sources": 4,
+      "real_attack_flows": 55,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "SQL_Injection",
+      "split": "test",
+      "real_sequences": 84,
+      "real_sources": 4,
+      "real_attack_flows": 88,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "SSH-Bruteforce",
+      "split": "train",
+      "real_sequences": 30,
+      "real_sources": 1,
+      "real_attack_flows": 103548,
+      "synthetic_selected": 593,
+      "synthetic_containing": 593
+    },
+    {
+      "attack_type": "SSH-Bruteforce",
+      "split": "validation",
+      "real_sequences": 10,
+      "real_sources": 1,
+      "real_attack_flows": 32984,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    },
+    {
+      "attack_type": "SSH-Bruteforce",
+      "split": "test",
+      "real_sequences": 6,
+      "real_sources": 1,
+      "real_attack_flows": 20756,
+      "synthetic_selected": 0,
+      "synthetic_containing": 0
+    }
+  ],
+  "features": [
+    {
+      "index": 0,
+      "feature": "flow_count",
+      "family": "Volume",
+      "definition": "Whole-flow counter sum or flow-start count assigned to this bucket; not interval-measured traffic.",
+      "log1p": true,
+      "train_mean": 1.216786835325863,
+      "train_scale": 0.7304419033406377,
+      "train_constant": false
+    },
+    {
+      "index": 1,
+      "feature": "in_bytes_sum",
+      "family": "Volume",
+      "definition": "Whole-flow counter sum or flow-start count assigned to this bucket; not interval-measured traffic.",
+      "log1p": true,
+      "train_mean": 6.460888156752272,
+      "train_scale": 1.83685210711941,
+      "train_constant": false
+    },
+    {
+      "index": 2,
+      "feature": "out_bytes_sum",
+      "family": "Volume",
+      "definition": "Whole-flow counter sum or flow-start count assigned to this bucket; not interval-measured traffic.",
+      "log1p": true,
+      "train_mean": 5.507136318288573,
+      "train_scale": 3.473011808968983,
+      "train_constant": false
+    },
+    {
+      "index": 3,
+      "feature": "in_pkts_sum",
+      "family": "Volume",
+      "definition": "Whole-flow counter sum or flow-start count assigned to this bucket; not interval-measured traffic.",
+      "log1p": true,
+      "train_mean": 2.26044381155375,
+      "train_scale": 1.2530184093764172,
+      "train_constant": false
+    },
+    {
+      "index": 4,
+      "feature": "out_pkts_sum",
+      "family": "Volume",
+      "definition": "Whole-flow counter sum or flow-start count assigned to this bucket; not interval-measured traffic.",
+      "log1p": true,
+      "train_mean": 1.8957379242481363,
+      "train_scale": 1.4839859366313577,
+      "train_constant": false
+    },
+    {
+      "index": 5,
+      "feature": "duration_mean",
+      "family": "Duration",
+      "definition": "Named mean/min/max of the exported per-flow duration in milliseconds; stored zeros retained.",
+      "log1p": true,
+      "train_mean": 5.66252508067719,
+      "train_scale": 3.7377354469513637,
+      "train_constant": false
+    },
+    {
+      "index": 6,
+      "feature": "duration_min",
+      "family": "Duration",
+      "definition": "Named mean/min/max of the exported per-flow duration in milliseconds; stored zeros retained.",
+      "log1p": true,
+      "train_mean": 4.52722416945435,
+      "train_scale": 3.716511921283396,
+      "train_constant": false
+    },
+    {
+      "index": 7,
+      "feature": "duration_max",
+      "family": "Duration",
+      "definition": "Named mean/min/max of the exported per-flow duration in milliseconds; stored zeros retained.",
+      "log1p": true,
+      "train_mean": 5.940710383945699,
+      "train_scale": 3.925983481388064,
+      "train_constant": false
+    },
+    {
+      "index": 8,
+      "feature": "protocol_tcp_ratio",
+      "family": "Protocol presence",
+      "definition": "Protocol or legacy DNS-presence flow fraction over all bucket starts.",
+      "log1p": false,
+      "train_mean": 0.8384400685155059,
+      "train_scale": 0.33864730064051274,
+      "train_constant": false
+    },
+    {
+      "index": 9,
+      "feature": "protocol_udp_ratio",
+      "family": "Protocol presence",
+      "definition": "Protocol or legacy DNS-presence flow fraction over all bucket starts.",
+      "log1p": false,
+      "train_mean": 0.15272477236244167,
+      "train_scale": 0.32858279758926867,
+      "train_constant": false
+    },
+    {
+      "index": 10,
+      "feature": "protocol_other_ratio",
+      "family": "Protocol presence",
+      "definition": "Protocol or legacy DNS-presence flow fraction over all bucket starts.",
+      "log1p": false,
+      "train_mean": 0.00883515912202723,
+      "train_scale": 0.08782777018850878,
+      "train_constant": false
+    },
+    {
+      "index": 11,
+      "feature": "protocol_nunique",
+      "family": "Diversity",
+      "definition": "Distinct original values in the bucket; DNS/ICMP only use eligible flows.",
+      "log1p": true,
+      "train_mean": 0.7356561966801815,
+      "train_scale": 0.12555481579820393,
+      "train_constant": false
+    },
+    {
+      "index": 12,
+      "feature": "l7_proto_nunique",
+      "family": "Diversity",
+      "definition": "Distinct original values in the bucket; DNS/ICMP only use eligible flows.",
+      "log1p": true,
+      "train_mean": 0.7928097343915714,
+      "train_scale": 0.20837716324482533,
+      "train_constant": false
+    },
+    {
+      "index": 13,
+      "feature": "l7_top1_ratio",
+      "family": "Diversity",
+      "definition": "Most frequent category count / all applicable flow counts; DNS/ICMP use their eligible population.",
+      "log1p": false,
+      "train_mean": 0.9220164003623303,
+      "train_scale": 0.16333839709118803,
+      "train_constant": false
+    },
+    {
+      "index": 14,
+      "feature": "l7_entropy",
+      "family": "Diversity",
+      "definition": "Normalized Shannon entropy: -sum(p*ln(p))/ln(k); zero for k<=1.",
+      "log1p": false,
+      "train_mean": 0.18119327943049038,
+      "train_scale": 0.3619728974811713,
+      "train_constant": false
+    },
+    {
+      "index": 15,
+      "feature": "src_port_nunique",
+      "family": "Diversity",
+      "definition": "Distinct original values in the bucket; DNS/ICMP only use eligible flows.",
+      "log1p": true,
+      "train_mean": 1.1520865891440686,
+      "train_scale": 0.7132397934157783,
+      "train_constant": false
+    },
+    {
+      "index": 16,
+      "feature": "src_port_reuse_ratio",
+      "family": "Diversity",
+      "definition": "1 - distinct category count / total bucket flow count.",
+      "log1p": false,
+      "train_mean": 0.06288835027567224,
+      "train_scale": 0.1759682219683854,
+      "train_constant": false
+    },
+    {
+      "index": 17,
+      "feature": "src_port_top1_ratio",
+      "family": "Diversity",
+      "definition": "Most frequent category count / all applicable flow counts; DNS/ICMP use their eligible population.",
+      "log1p": false,
+      "train_mean": 0.6772223867890368,
+      "train_scale": 0.3501651013389723,
+      "train_constant": false
+    },
+    {
+      "index": 18,
+      "feature": "src_port_entropy",
+      "family": "Diversity",
+      "definition": "Normalized Shannon entropy: -sum(p*ln(p))/ln(k); zero for k<=1.",
+      "log1p": false,
+      "train_mean": 0.4854331026598125,
+      "train_scale": 0.49678666164375535,
+      "train_constant": false
+    },
+    {
+      "index": 19,
+      "feature": "dst_port_nunique",
+      "family": "Diversity",
+      "definition": "Distinct original values in the bucket; DNS/ICMP only use eligible flows.",
+      "log1p": true,
+      "train_mean": 0.8142373809471031,
+      "train_scale": 0.2687109993440561,
+      "train_constant": false
+    },
+    {
+      "index": 20,
+      "feature": "dst_port_reuse_ratio",
+      "family": "Diversity",
+      "definition": "1 - distinct category count / total bucket flow count.",
+      "log1p": false,
+      "train_mean": 0.2985830762472393,
+      "train_scale": 0.33886353960608584,
+      "train_constant": false
+    },
+    {
+      "index": 21,
+      "feature": "dst_port_top1_ratio",
+      "family": "Diversity",
+      "definition": "Most frequent category count / all applicable flow counts; DNS/ICMP use their eligible population.",
+      "log1p": false,
+      "train_mean": 0.9057086179541822,
+      "train_scale": 0.2055203099199355,
+      "train_constant": false
+    },
+    {
+      "index": 22,
+      "feature": "dst_port_entropy",
+      "family": "Diversity",
+      "definition": "Normalized Shannon entropy: -sum(p*ln(p))/ln(k); zero for k<=1.",
+      "log1p": false,
+      "train_mean": 0.1790865103939462,
+      "train_scale": 0.36587854858723795,
+      "train_constant": false
+    },
+    {
+      "index": 23,
+      "feature": "tcp_flag_fin_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.31210086907210965,
+      "train_scale": 0.43195653634840275,
+      "train_constant": false
+    },
+    {
+      "index": 24,
+      "feature": "tcp_flag_syn_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.7160302388980058,
+      "train_scale": 0.4435387707661294,
+      "train_constant": false
+    },
+    {
+      "index": 25,
+      "feature": "tcp_flag_rst_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.46672164027495816,
+      "train_scale": 0.48466432114122254,
+      "train_constant": false
+    },
+    {
+      "index": 26,
+      "feature": "tcp_flag_psh_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.5742910074130934,
+      "train_scale": 0.46779624613726983,
+      "train_constant": false
+    },
+    {
+      "index": 27,
+      "feature": "tcp_flag_ack_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.7542703464031167,
+      "train_scale": 0.42972296173308,
+      "train_constant": false
+    },
+    {
+      "index": 28,
+      "feature": "tcp_flag_urg_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 6.943720704081972e-06,
+      "train_scale": 0.000958608806499122,
+      "train_constant": false
+    },
+    {
+      "index": 29,
+      "feature": "tcp_flag_ece_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.2608156313093825,
+      "train_scale": 0.4346570231972171,
+      "train_constant": false
+    },
+    {
+      "index": 30,
+      "feature": "tcp_flag_cwr_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.2609976059895915,
+      "train_scale": 0.4347438835413063,
+      "train_constant": false
+    },
+    {
+      "index": 31,
+      "feature": "client_tcp_flag_fin_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.31026567279648803,
+      "train_scale": 0.43113396868095666,
+      "train_constant": false
+    },
+    {
+      "index": 32,
+      "feature": "client_tcp_flag_syn_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.7160297282100863,
+      "train_scale": 0.44353901950170066,
+      "train_constant": false
+    },
+    {
+      "index": 33,
+      "feature": "client_tcp_flag_rst_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.30723610291679443,
+      "train_scale": 0.44687294752163,
+      "train_constant": false
+    },
+    {
+      "index": 34,
+      "feature": "client_tcp_flag_psh_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.5721342819932225,
+      "train_scale": 0.4679472429375993,
+      "train_constant": false
+    },
+    {
+      "index": 35,
+      "feature": "client_tcp_flag_ack_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.7421333939137001,
+      "train_scale": 0.4354378353224782,
+      "train_constant": false
+    },
+    {
+      "index": 36,
+      "feature": "client_tcp_flag_urg_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 6.943720704081972e-06,
+      "train_scale": 0.000958608806499122,
+      "train_constant": false
+    },
+    {
+      "index": 37,
+      "feature": "client_tcp_flag_ece_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.2608035958969975,
+      "train_scale": 0.43465955833118075,
+      "train_constant": false
+    },
+    {
+      "index": 38,
+      "feature": "client_tcp_flag_cwr_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.2609614067925326,
+      "train_scale": 0.43474714110211826,
+      "train_constant": false
+    },
+    {
+      "index": 39,
+      "feature": "server_tcp_flag_fin_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.15929678897070346,
+      "train_scale": 0.3480215745363384,
+      "train_constant": false
+    },
+    {
+      "index": 40,
+      "feature": "server_tcp_flag_syn_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.5631717414394689,
+      "train_scale": 0.489067222907942,
+      "train_constant": false
+    },
+    {
+      "index": 41,
+      "feature": "server_tcp_flag_rst_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.16793589810624837,
+      "train_scale": 0.3660755103040822,
+      "train_constant": false
+    },
+    {
+      "index": 42,
+      "feature": "server_tcp_flag_psh_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.5433251424106283,
+      "train_scale": 0.4691537833581611,
+      "train_constant": false
+    },
+    {
+      "index": 43,
+      "feature": "server_tcp_flag_ack_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.6597342968208115,
+      "train_scale": 0.46827234606661283,
+      "train_constant": false
+    },
+    {
+      "index": 44,
+      "feature": "server_tcp_flag_ece_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.14222050941730713,
+      "train_scale": 0.32833370941057044,
+      "train_constant": false
+    },
+    {
+      "index": 45,
+      "feature": "server_tcp_flag_cwr_ratio",
+      "family": "TCP flags",
+      "definition": "TCP flows containing the named bit / TCP flow count; zero when no TCP flow.",
+      "log1p": false,
+      "train_mean": 0.0024301927827298556,
+      "train_scale": 0.04130675876616496,
+      "train_constant": false
+    },
+    {
+      "index": 46,
+      "feature": "icmp_flow_ratio",
+      "family": "Protocol presence",
+      "definition": "Protocol or legacy DNS-presence flow fraction over all bucket starts.",
+      "log1p": false,
+      "train_mean": 0.0074054115458227375,
+      "train_scale": 0.08504459764099431,
+      "train_constant": false
+    },
+    {
+      "index": 47,
+      "feature": "icmp_type_nunique",
+      "family": "Diversity",
+      "definition": "Distinct original values in the bucket; DNS/ICMP only use eligible flows.",
+      "log1p": true,
+      "train_mean": 0.0053582240276301716,
+      "train_scale": 0.06070689674847516,
+      "train_constant": false
+    },
+    {
+      "index": 48,
+      "feature": "icmp_type_top1_ratio",
+      "family": "Diversity",
+      "definition": "Most frequent category count / all applicable flow counts; DNS/ICMP use their eligible population.",
+      "log1p": false,
+      "train_mean": 0.007730283232633941,
+      "train_scale": 0.08758153888678594,
+      "train_constant": false
+    },
+    {
+      "index": 49,
+      "feature": "icmp_type_entropy",
+      "family": "Diversity",
+      "definition": "Normalized Shannon entropy: -sum(p*ln(p))/ln(k); zero for k<=1.",
+      "log1p": false,
+      "train_mean": 0.0,
+      "train_scale": 1.0,
+      "train_constant": true
+    },
+    {
+      "index": 50,
+      "feature": "dns_flow_ratio",
+      "family": "Protocol presence",
+      "definition": "Protocol or legacy DNS-presence flow fraction over all bucket starts.",
+      "log1p": false,
+      "train_mean": 0.12093868904379752,
+      "train_scale": 0.29214723024975797,
+      "train_constant": false
+    },
+    {
+      "index": 51,
+      "feature": "dns_query_type_nunique",
+      "family": "Diversity",
+      "definition": "Distinct original values in the bucket; DNS/ICMP only use eligible flows.",
+      "log1p": true,
+      "train_mean": 0.1370565068557102,
+      "train_scale": 0.32140135591765434,
+      "train_constant": false
+    },
+    {
+      "index": 52,
+      "feature": "dns_query_type_top1_ratio",
+      "family": "Diversity",
+      "definition": "Most frequent category count / all applicable flow counts; DNS/ICMP use their eligible population.",
+      "log1p": false,
+      "train_mean": 0.14402528657568706,
+      "train_scale": 0.3334057230878483,
+      "train_constant": false
+    },
+    {
+      "index": 53,
+      "feature": "dns_query_type_entropy",
+      "family": "Diversity",
+      "definition": "Normalized Shannon entropy: -sum(p*ln(p))/ln(k); zero for k<=1.",
+      "log1p": false,
+      "train_mean": 0.05111652063889567,
+      "train_scale": 0.20451026710113562,
+      "train_constant": false
+    },
+    {
+      "index": 54,
+      "feature": "dst_ip_nunique",
+      "family": "Diversity",
+      "definition": "Distinct original values in the bucket; DNS/ICMP only use eligible flows.",
+      "log1p": true,
+      "train_mean": 0.9282336987365388,
+      "train_scale": 0.4931028796965334,
+      "train_constant": false
+    },
+    {
+      "index": 55,
+      "feature": "dst_ip_reuse_ratio",
+      "family": "Diversity",
+      "definition": "1 - distinct category count / total bucket flow count.",
+      "log1p": false,
+      "train_mean": 0.24653046805683287,
+      "train_scale": 0.30395028064233376,
+      "train_constant": false
+    },
+    {
+      "index": 56,
+      "feature": "dst_ip_top1_ratio",
+      "family": "Diversity",
+      "definition": "Most frequent category count / all applicable flow counts; DNS/ICMP use their eligible population.",
+      "log1p": false,
+      "train_mean": 0.8501672049806251,
+      "train_scale": 0.2600078597727965,
+      "train_constant": false
+    },
+    {
+      "index": 57,
+      "feature": "dst_ip_entropy",
+      "family": "Diversity",
+      "definition": "Normalized Shannon entropy: -sum(p*ln(p))/ln(k); zero for k<=1.",
+      "log1p": false,
+      "train_mean": 0.2614029578958794,
+      "train_scale": 0.42165837693481373,
+      "train_constant": false
+    },
+    {
+      "index": 58,
+      "feature": "duration_in_mean",
+      "family": "Duration",
+      "definition": "Named mean/min/max of the exported per-flow duration in milliseconds; stored zeros retained.",
+      "log1p": true,
+      "train_mean": 5.348915947858247,
+      "train_scale": 4.064670482155478,
+      "train_constant": false
+    },
+    {
+      "index": 59,
+      "feature": "duration_in_max",
+      "family": "Duration",
+      "definition": "Named mean/min/max of the exported per-flow duration in milliseconds; stored zeros retained.",
+      "log1p": true,
+      "train_mean": 5.620642643757428,
+      "train_scale": 4.256080367614997,
+      "train_constant": false
+    },
+    {
+      "index": 60,
+      "feature": "duration_out_mean",
+      "family": "Duration",
+      "definition": "Named mean/min/max of the exported per-flow duration in milliseconds; stored zeros retained.",
+      "log1p": true,
+      "train_mean": 4.920628233826634,
+      "train_scale": 4.225798546136481,
+      "train_constant": false
+    },
+    {
+      "index": 61,
+      "feature": "duration_out_max",
+      "family": "Duration",
+      "definition": "Named mean/min/max of the exported per-flow duration in milliseconds; stored zeros retained.",
+      "log1p": true,
+      "train_mean": 5.158822313439968,
+      "train_scale": 4.441454823969949,
+      "train_constant": false
+    },
+    {
+      "index": 62,
+      "feature": "min_ip_pkt_len_min",
+      "family": "Packet size",
+      "definition": "Named statistic of the exported per-flow packet-length extremum, in bytes; not a pooled packet mean.",
+      "log1p": true,
+      "train_mean": 2.6780591490449037,
+      "train_scale": 1.7114626507010195,
+      "train_constant": false
+    },
+    {
+      "index": 63,
+      "feature": "min_ip_pkt_len_mean",
+      "family": "Packet size",
+      "definition": "Named statistic of the exported per-flow packet-length extremum, in bytes; not a pooled packet mean.",
+      "log1p": true,
+      "train_mean": 2.861818375373855,
+      "train_scale": 1.6382999086142331,
+      "train_constant": false
+    },
+    {
+      "index": 64,
+      "feature": "max_ip_pkt_len_mean",
+      "family": "Packet size",
+      "definition": "Named statistic of the exported per-flow packet-length extremum, in bytes; not a pooled packet mean.",
+      "log1p": true,
+      "train_mean": 5.344218528124342,
+      "train_scale": 1.27853311656854,
+      "train_constant": false
+    },
+    {
+      "index": 65,
+      "feature": "max_ip_pkt_len_max",
+      "family": "Packet size",
+      "definition": "Named statistic of the exported per-flow packet-length extremum, in bytes; not a pooled packet mean.",
+      "log1p": true,
+      "train_mean": 5.513698211293401,
+      "train_scale": 1.3450281054096302,
+      "train_constant": false
+    },
+    {
+      "index": 66,
+      "feature": "retransmitted_in_bytes_sum",
+      "family": "Retransmissions",
+      "definition": "Sum of the named exported per-flow retransmission counter.",
+      "log1p": true,
+      "train_mean": 0.6609238043536306,
+      "train_scale": 1.948603709584485,
+      "train_constant": false
+    },
+    {
+      "index": 67,
+      "feature": "retransmitted_in_pkts_sum",
+      "family": "Retransmissions",
+      "definition": "Sum of the named exported per-flow retransmission counter.",
+      "log1p": true,
+      "train_mean": 0.2298171963255003,
+      "train_scale": 0.7782964525751059,
+      "train_constant": false
+    },
+    {
+      "index": 68,
+      "feature": "retransmitted_out_bytes_sum",
+      "family": "Retransmissions",
+      "definition": "Sum of the named exported per-flow retransmission counter.",
+      "log1p": true,
+      "train_mean": 0.4751566327202826,
+      "train_scale": 1.6833136580955332,
+      "train_constant": false
+    },
+    {
+      "index": 69,
+      "feature": "retransmitted_out_pkts_sum",
+      "family": "Retransmissions",
+      "definition": "Sum of the named exported per-flow retransmission counter.",
+      "log1p": true,
+      "train_mean": 0.09108371210040504,
+      "train_scale": 0.3654346388769527,
+      "train_constant": false
+    },
+    {
+      "index": 70,
+      "feature": "num_pkts_up_to_128_bytes_ratio",
+      "family": "Packet-size bins",
+      "definition": "Sum of this exported packet-size bin / sum of all five exported bins; zero denominator gives zero.",
+      "log1p": false,
+      "train_mean": 0.8012441545268781,
+      "train_scale": 0.1846712071874743,
+      "train_constant": false
+    },
+    {
+      "index": 71,
+      "feature": "num_pkts_128_to_256_bytes_ratio",
+      "family": "Packet-size bins",
+      "definition": "Sum of this exported packet-size bin / sum of all five exported bins; zero denominator gives zero.",
+      "log1p": false,
+      "train_mean": 0.11976450987727152,
+      "train_scale": 0.15056545004391284,
+      "train_constant": false
+    },
+    {
+      "index": 72,
+      "feature": "num_pkts_256_to_512_bytes_ratio",
+      "family": "Packet-size bins",
+      "definition": "Sum of this exported packet-size bin / sum of all five exported bins; zero denominator gives zero.",
+      "log1p": false,
+      "train_mean": 0.03297468528235577,
+      "train_scale": 0.07461883698791441,
+      "train_constant": false
+    },
+    {
+      "index": 73,
+      "feature": "num_pkts_512_to_1024_bytes_ratio",
+      "family": "Packet-size bins",
+      "definition": "Sum of this exported packet-size bin / sum of all five exported bins; zero denominator gives zero.",
+      "log1p": false,
+      "train_mean": 0.022249296558811662,
+      "train_scale": 0.046815856955580215,
+      "train_constant": false
+    },
+    {
+      "index": 74,
+      "feature": "num_pkts_1024_to_1514_bytes_ratio",
+      "family": "Packet-size bins",
+      "definition": "Sum of this exported packet-size bin / sum of all five exported bins; zero denominator gives zero.",
+      "log1p": false,
+      "train_mean": 0.02376735375469021,
+      "train_scale": 0.056085035022959084,
+      "train_constant": false
+    },
+    {
+      "index": 75,
+      "feature": "tcp_win_max_in_mean",
+      "family": "TCP window",
+      "definition": "Mean/max of the exported per-flow window field over TCP flows only; bytes.",
+      "log1p": true,
+      "train_mean": 7.2732726902043625,
+      "train_scale": 3.5480653104424316,
+      "train_constant": false
+    },
+    {
+      "index": 76,
+      "feature": "tcp_win_max_in_max",
+      "family": "TCP window",
+      "definition": "Mean/max of the exported per-flow window field over TCP flows only; bytes.",
+      "log1p": true,
+      "train_mean": 7.3378589779892405,
+      "train_scale": 3.5801187011899582,
+      "train_constant": false
+    },
+    {
+      "index": 77,
+      "feature": "tcp_win_max_out_mean",
+      "family": "TCP window",
+      "definition": "Mean/max of the exported per-flow window field over TCP flows only; bytes.",
+      "log1p": true,
+      "train_mean": 6.547492657769974,
+      "train_scale": 4.7898312012919995,
+      "train_constant": false
+    },
+    {
+      "index": 78,
+      "feature": "tcp_win_max_out_max",
+      "family": "TCP window",
+      "definition": "Mean/max of the exported per-flow window field over TCP flows only; bytes.",
+      "log1p": true,
+      "train_mean": 6.607686190912946,
+      "train_scale": 4.819550636745604,
+      "train_constant": false
+    },
+    {
+      "index": 79,
+      "feature": "flow_start_gap_mean_ms",
+      "family": "Start timing",
+      "definition": "Mean/max adjacent sorted flow-start gap or last-first span in milliseconds; <2 starts gives zero.",
+      "log1p": true,
+      "train_mean": 3.5648977018939383,
+      "train_scale": 3.543458870910876,
+      "train_constant": false
+    },
+    {
+      "index": 80,
+      "feature": "flow_start_gap_max_ms",
+      "family": "Start timing",
+      "definition": "Mean/max adjacent sorted flow-start gap or last-first span in milliseconds; <2 starts gives zero.",
+      "log1p": true,
+      "train_mean": 3.8720092295953767,
+      "train_scale": 3.791185471757007,
+      "train_constant": false
+    },
+    {
+      "index": 81,
+      "feature": "flow_start_span_ms",
+      "family": "Start timing",
+      "definition": "Mean/max adjacent sorted flow-start gap or last-first span in milliseconds; <2 starts gives zero.",
+      "log1p": true,
+      "train_mean": 4.078903672169659,
+      "train_scale": 4.001862373084966,
+      "train_constant": false
+    },
+    {
+      "index": 82,
+      "feature": "l7_code_0_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.08875008584369781,
+      "train_scale": 0.2835788115659584,
+      "train_constant": false
+    },
+    {
+      "index": 83,
+      "feature": "l7_code_1_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0008641037950654709,
+      "train_scale": 0.029352456588720974,
+      "train_constant": false
+    },
+    {
+      "index": 84,
+      "feature": "l7_code_2_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00031013576394199415,
+      "train_scale": 0.017532044118249223,
+      "train_constant": false
+    },
+    {
+      "index": 85,
+      "feature": "l7_code_3_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00033527009655831173,
+      "train_scale": 0.018258116660625583,
+      "train_constant": false
+    },
+    {
+      "index": 86,
+      "feature": "l7_code_4_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00015453796801891332,
+      "train_scale": 0.01241277271047381,
+      "train_constant": false
+    },
+    {
+      "index": 87,
+      "feature": "l7_code_5_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.1156048397645847,
+      "train_scale": 0.2873321957071948,
+      "train_constant": false
+    },
+    {
+      "index": 88,
+      "feature": "l7_code_7_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.09560867045546317,
+      "train_scale": 0.2780344623960481,
+      "train_constant": false
+    },
+    {
+      "index": 89,
+      "feature": "l7_code_8_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.151032551419113e-05,
+      "train_scale": 0.00715749782166951,
+      "train_constant": false
+    },
+    {
+      "index": 90,
+      "feature": "l7_code_9_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.006957702804860045,
+      "train_scale": 0.0792936236954705,
+      "train_constant": false
+    },
+    {
+      "index": 91,
+      "feature": "l7_code_10_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.09400445519447206,
+      "train_scale": 0.2563429500485696,
+      "train_constant": false
+    },
+    {
+      "index": 92,
+      "feature": "l7_code_11_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 6.956225226263955e-05,
+      "train_scale": 0.008183538327368017,
+      "train_constant": false
+    },
+    {
+      "index": 93,
+      "feature": "l7_code_12_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0008202738092556412,
+      "train_scale": 0.026975126394898297,
+      "train_constant": false
+    },
+    {
+      "index": 94,
+      "feature": "l7_code_13_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.272893592549698e-05,
+      "train_scale": 0.006408783202598862,
+      "train_constant": false
+    },
+    {
+      "index": 95,
+      "feature": "l7_code_14_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0004048904157323083,
+      "train_scale": 0.02010053174581374,
+      "train_constant": false
+    },
+    {
+      "index": 96,
+      "feature": "l7_code_15_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.7236689727632093e-06,
+      "train_scale": 0.0013579924331903958,
+      "train_constant": false
+    },
+    {
+      "index": 97,
+      "feature": "l7_code_17_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.44487593686845e-05,
+      "train_scale": 0.006641521744643079,
+      "train_constant": false
+    },
+    {
+      "index": 98,
+      "feature": "l7_code_18_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.001570046739068122,
+      "train_scale": 0.0277461759030634,
+      "train_constant": false
+    },
+    {
+      "index": 99,
+      "feature": "l7_code_19_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0002083928736146191,
+      "train_scale": 0.014373737306630458,
+      "train_constant": false
+    },
+    {
+      "index": 100,
+      "feature": "l7_code_20_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.000669553140820722,
+      "train_scale": 0.02577844903791025,
+      "train_constant": false
+    },
+    {
+      "index": 101,
+      "feature": "l7_code_23_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00019367587765692308,
+      "train_scale": 0.013892694113505346,
+      "train_constant": false
+    },
+    {
+      "index": 102,
+      "feature": "l7_code_25_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 6.128255188717145e-06,
+      "train_scale": 0.002475523708875645,
+      "train_constant": false
+    },
+    {
+      "index": 103,
+      "feature": "l7_code_27_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.429965016774557e-05,
+      "train_scale": 0.003781409515232456,
+      "train_constant": false
+    },
+    {
+      "index": 104,
+      "feature": "l7_code_28_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.9151974000704966e-07,
+      "train_scale": 0.00035748866669781213,
+      "train_constant": false
+    },
+    {
+      "index": 105,
+      "feature": "l7_code_29_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00011468921112344342,
+      "train_scale": 0.010688937872512088,
+      "train_constant": false
+    },
+    {
+      "index": 106,
+      "feature": "l7_code_31_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.0469102614058361e-05,
+      "train_scale": 0.003215792441817469,
+      "train_constant": false
+    },
+    {
+      "index": 107,
+      "feature": "l7_code_37_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00036077679419355444,
+      "train_scale": 0.018936888830801486,
+      "train_constant": false
+    },
+    {
+      "index": 108,
+      "feature": "l7_code_40_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0008079083090458647,
+      "train_scale": 0.028392764970848697,
+      "train_constant": false
+    },
+    {
+      "index": 109,
+      "feature": "l7_code_41_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.07726751722260271,
+      "train_scale": 0.23068179115469267,
+      "train_constant": false
+    },
+    {
+      "index": 110,
+      "feature": "l7_code_43_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.163622427530079e-07,
+      "train_scale": 0.00034363998130211327,
+      "train_constant": false
+    },
+    {
+      "index": 111,
+      "feature": "l7_code_44_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.362223290127592e-05,
+      "train_scale": 0.00732252398817596,
+      "train_constant": false
+    },
+    {
+      "index": 112,
+      "feature": "l7_code_50_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.87171045011913e-05,
+      "train_scale": 0.006966449522269465,
+      "train_constant": false
+    },
+    {
+      "index": 113,
+      "feature": "l7_code_51_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00012473601876264977,
+      "train_scale": 0.011150861965648986,
+      "train_constant": false
+    },
+    {
+      "index": 114,
+      "feature": "l7_code_53_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.9403036945026098e-10,
+      "train_scale": 2.7151373369331035e-07,
+      "train_constant": false
+    },
+    {
+      "index": 115,
+      "feature": "l7_code_58_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.0213758647861738e-06,
+      "train_scale": 0.001010630902742191,
+      "train_constant": false
+    },
+    {
+      "index": 116,
+      "feature": "l7_code_60_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.829524855969758e-05,
+      "train_scale": 0.007535430948469512,
+      "train_constant": false
+    },
+    {
+      "index": 117,
+      "feature": "l7_code_62_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.0213758647861685e-06,
+      "train_scale": 0.0010106309027421959,
+      "train_constant": false
+    },
+    {
+      "index": 118,
+      "feature": "l7_code_64_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.9403036945026098e-10,
+      "train_scale": 2.7151373369331035e-07,
+      "train_constant": false
+    },
+    {
+      "index": 119,
+      "feature": "l7_code_65_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.958025877919336e-06,
+      "train_scale": 0.0022282248690068183,
+      "train_constant": false
+    },
+    {
+      "index": 120,
+      "feature": "l7_code_72_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.4867933110335356e-05,
+      "train_scale": 0.003659535393524281,
+      "train_constant": false
+    },
+    {
+      "index": 121,
+      "feature": "l7_code_74_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.106879323930939e-07,
+      "train_scale": 0.0007146241470807813,
+      "train_constant": false
+    },
+    {
+      "index": 122,
+      "feature": "l7_code_77_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.033726070203944455,
+      "train_scale": 0.18047253422575973,
+      "train_constant": false
+    },
+    {
+      "index": 123,
+      "feature": "l7_code_78_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.260525669341318e-06,
+      "train_scale": 0.0012439621135826372,
+      "train_constant": false
+    },
+    {
+      "index": 124,
+      "feature": "l7_code_79_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0009890309849072095,
+      "train_scale": 0.031316736481334095,
+      "train_constant": false
+    },
+    {
+      "index": 125,
+      "feature": "l7_code_80_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.5961913915379e-06,
+      "train_scale": 0.0021438680618364654,
+      "train_constant": false
+    },
+    {
+      "index": 126,
+      "feature": "l7_code_81_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0074054115458227375,
+      "train_scale": 0.08504459764099431,
+      "train_constant": false
+    },
+    {
+      "index": 127,
+      "feature": "l7_code_82_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0011365842692264416,
+      "train_scale": 0.018709159757630624,
+      "train_constant": false
+    },
+    {
+      "index": 128,
+      "feature": "l7_code_85_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.4067935715344508e-06,
+      "train_scale": 0.0010761446925526576,
+      "train_constant": false
+    },
+    {
+      "index": 129,
+      "feature": "l7_code_88_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.3351818415810663,
+      "train_scale": 0.46581080450793694,
+      "train_constant": false
+    },
+    {
+      "index": 130,
+      "feature": "l7_code_89_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0007499983678925635,
+      "train_scale": 0.02728916232063281,
+      "train_constant": false
+    },
+    {
+      "index": 131,
+      "feature": "l7_code_91_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.10721931272933094,
+      "train_scale": 0.2799914365036074,
+      "train_constant": false
+    },
+    {
+      "index": 132,
+      "feature": "l7_code_92_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.006595738950265831,
+      "train_scale": 0.08091862810138195,
+      "train_constant": false
+    },
+    {
+      "index": 133,
+      "feature": "l7_code_95_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.059968691021561e-06,
+      "train_scale": 0.0012171927806328277,
+      "train_constant": false
+    },
+    {
+      "index": 134,
+      "feature": "l7_code_96_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.2682083654428287e-05,
+      "train_scale": 0.003527146811359839,
+      "train_constant": false
+    },
+    {
+      "index": 135,
+      "feature": "l7_code_97_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 3.017980705797705e-06,
+      "train_scale": 0.001492431713458105,
+      "train_constant": false
+    },
+    {
+      "index": 136,
+      "feature": "l7_code_100_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0034832112499109586,
+      "train_scale": 0.05890377350853706,
+      "train_constant": false
+    },
+    {
+      "index": 137,
+      "feature": "l7_code_102_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.000288567115586596,
+      "train_scale": 0.01217975471328224,
+      "train_constant": false
+    },
+    {
+      "index": 138,
+      "feature": "l7_code_103_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0021872520770951183,
+      "train_scale": 0.044826831103623524,
+      "train_constant": false
+    },
+    {
+      "index": 139,
+      "feature": "l7_code_111_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00014787821578119927,
+      "train_scale": 0.012070648854772,
+      "train_constant": false
+    },
+    {
+      "index": 140,
+      "feature": "l7_code_112_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00015457609859931466,
+      "train_scale": 0.01230582442730168,
+      "train_constant": false
+    },
+    {
+      "index": 141,
+      "feature": "l7_code_114_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0006996909432046817,
+      "train_scale": 0.026223973287134033,
+      "train_constant": false
+    },
+    {
+      "index": 142,
+      "feature": "l7_code_115_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.2980956957689863e-06,
+      "train_scale": 0.0013838621554295783,
+      "train_constant": false
+    },
+    {
+      "index": 143,
+      "feature": "l7_code_129_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.9403036945026098e-10,
+      "train_scale": 2.7151373369331035e-07,
+      "train_constant": false
+    },
+    {
+      "index": 144,
+      "feature": "l7_code_131_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00482215448203466,
+      "train_scale": 0.06897022480725375,
+      "train_constant": false
+    },
+    {
+      "index": 145,
+      "feature": "l7_code_132_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 6.391085804943241e-06,
+      "train_scale": 0.002106652932645263,
+      "train_constant": false
+    },
+    {
+      "index": 146,
+      "feature": "l7_code_138_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.7618733667562719e-06,
+      "train_scale": 0.0008225062604406459,
+      "train_constant": false
+    },
+    {
+      "index": 147,
+      "feature": "l7_code_139_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 9.748548510232308e-05,
+      "train_scale": 0.009505851184498443,
+      "train_constant": false
+    },
+    {
+      "index": 148,
+      "feature": "l7_code_144_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 3.385685358350302e-05,
+      "train_scale": 0.005510533226335806,
+      "train_constant": false
+    },
+    {
+      "index": 149,
+      "feature": "l7_code_146_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.1760327694736319e-05,
+      "train_scale": 0.003029674469852917,
+      "train_constant": false
+    },
+    {
+      "index": 150,
+      "feature": "l7_code_148_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.227469934824744e-05,
+      "train_scale": 0.004460689398331859,
+      "train_constant": false
+    },
+    {
+      "index": 151,
+      "feature": "l7_code_150_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.5982380250649815e-06,
+      "train_scale": 0.0010683355325116777,
+      "train_constant": false
+    },
+    {
+      "index": 152,
+      "feature": "l7_code_151_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.2223436524639343e-05,
+      "train_scale": 0.004247082902391726,
+      "train_constant": false
+    },
+    {
+      "index": 153,
+      "feature": "l7_code_152_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.3277886242220502e-05,
+      "train_scale": 0.00364385920967833,
+      "train_constant": false
+    },
+    {
+      "index": 154,
+      "feature": "l7_code_153_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.1935388352114525e-05,
+      "train_scale": 0.0032318701097643187,
+      "train_constant": false
+    },
+    {
+      "index": 155,
+      "feature": "l7_code_154_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0054448401788441325,
+      "train_scale": 0.05877663320400152,
+      "train_constant": false
+    },
+    {
+      "index": 156,
+      "feature": "l7_code_158_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.049915938564078e-06,
+      "train_scale": 0.0019082326767465916,
+      "train_constant": false
+    },
+    {
+      "index": 157,
+      "feature": "l7_code_159_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.092118229703671e-05,
+      "train_scale": 0.004464844137943818,
+      "train_constant": false
+    },
+    {
+      "index": 158,
+      "feature": "l7_code_161_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00012150414497018564,
+      "train_scale": 0.010540702516540821,
+      "train_constant": false
+    },
+    {
+      "index": 159,
+      "feature": "l7_code_162_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 9.788185370867783e-06,
+      "train_scale": 0.0031172360646566527,
+      "train_constant": false
+    },
+    {
+      "index": 160,
+      "feature": "l7_code_164_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 3.812310828379727e-05,
+      "train_scale": 0.005846085206624539,
+      "train_constant": false
+    },
+    {
+      "index": 161,
+      "feature": "l7_code_166_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.5127143114481314e-05,
+      "train_scale": 0.0049229671550108526,
+      "train_constant": false
+    },
+    {
+      "index": 162,
+      "feature": "l7_code_167_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.887737391505745e-05,
+      "train_scale": 0.007618139720925463,
+      "train_constant": false
+    },
+    {
+      "index": 163,
+      "feature": "l7_code_168_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 8.676119030592834e-07,
+      "train_scale": 0.0005886737270737335,
+      "train_constant": false
+    },
+    {
+      "index": 164,
+      "feature": "l7_code_170_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.3534215916168672e-05,
+      "train_scale": 0.003399278648909309,
+      "train_constant": false
+    },
+    {
+      "index": 165,
+      "feature": "l7_code_172_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00017828036916641918,
+      "train_scale": 0.01281141494201729,
+      "train_constant": false
+    },
+    {
+      "index": 166,
+      "feature": "l7_code_174_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.6491007943713565e-06,
+      "train_scale": 0.001245381505509372,
+      "train_constant": false
+    },
+    {
+      "index": 167,
+      "feature": "l7_code_175_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 6.542085862995238e-05,
+      "train_scale": 0.007968188260545,
+      "train_constant": false
+    },
+    {
+      "index": 168,
+      "feature": "l7_code_182_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00027867068225854026,
+      "train_scale": 0.016669932640986197,
+      "train_constant": false
+    },
+    {
+      "index": 169,
+      "feature": "l7_code_185_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 6.133261933152193e-07,
+      "train_scale": 0.0007220127043785918,
+      "train_constant": false
+    },
+    {
+      "index": 170,
+      "feature": "l7_code_188_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00012152546804578235,
+      "train_scale": 0.010655545317682652,
+      "train_constant": false
+    },
+    {
+      "index": 171,
+      "feature": "l7_code_190_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.0213758647861694e-06,
+      "train_scale": 0.0010106309027421967,
+      "train_constant": false
+    },
+    {
+      "index": 172,
+      "feature": "l7_code_196_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.106879323930916e-07,
+      "train_scale": 0.0007146241470807844,
+      "train_constant": false
+    },
+    {
+      "index": 173,
+      "feature": "l7_code_213_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 7.956690852425846e-06,
+      "train_scale": 0.0024674278732500087,
+      "train_constant": false
+    },
+    {
+      "index": 174,
+      "feature": "l7_code_214_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.520451144224418e-05,
+      "train_scale": 0.00644523861109346,
+      "train_constant": false
+    },
+    {
+      "index": 175,
+      "feature": "l7_code_222_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 3.565853170436769e-05,
+      "train_scale": 0.005660259212429152,
+      "train_constant": false
+    },
+    {
+      "index": 176,
+      "feature": "l7_code_226_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.5952667763902722e-05,
+      "train_scale": 0.0038671970311212078,
+      "train_constant": false
+    },
+    {
+      "index": 177,
+      "feature": "l7_code_229_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 3.550110168983144e-06,
+      "train_scale": 0.0013100515139431014,
+      "train_constant": false
+    },
+    {
+      "index": 178,
+      "feature": "l7_code_237_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 7.952006851770078e-06,
+      "train_scale": 0.0023723086144962426,
+      "train_constant": false
+    },
+    {
+      "index": 179,
+      "feature": "l7_code_243_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.001141581600492e-05,
+      "train_scale": 0.006827769762410546,
+      "train_constant": false
+    },
+    {
+      "index": 180,
+      "feature": "l7_code_244_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00013057324227840728,
+      "train_scale": 0.011244679613480862,
+      "train_constant": false
+    },
+    {
+      "index": 181,
+      "feature": "l7_code_245_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.9252935051219536e-05,
+      "train_scale": 0.004251053595791697,
+      "train_constant": false
+    },
+    {
+      "index": 182,
+      "feature": "l7_code_248_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.7584173376166566e-05,
+      "train_scale": 0.0038341289680176673,
+      "train_constant": false
+    },
+    {
+      "index": 183,
+      "feature": "l7_code_251_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.106879323930856e-07,
+      "train_scale": 0.0007146241470807709,
+      "train_constant": false
+    },
+    {
+      "index": 184,
+      "feature": "l7_code_259_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.77513482181685e-05,
+      "train_scale": 0.006606538202763114,
+      "train_constant": false
+    },
+    {
+      "index": 185,
+      "feature": "l7_code_260_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.7874077633758422e-06,
+      "train_scale": 0.0012883060915213527,
+      "train_constant": false
+    },
+    {
+      "index": 186,
+      "feature": "l7_code_264_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 6.646907989195223e-05,
+      "train_scale": 0.007924884911689255,
+      "train_constant": false
+    },
+    {
+      "index": 187,
+      "feature": "l7_code_265_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.000691101998807447,
+      "train_scale": 0.026266801627279988,
+      "train_constant": false
+    },
+    {
+      "index": 188,
+      "feature": "l7_code_274_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.859852421401351e-05,
+      "train_scale": 0.005347682333350219,
+      "train_constant": false
+    },
+    {
+      "index": 189,
+      "feature": "l7_code_276_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.22565103774341e-05,
+      "train_scale": 0.003500908475722799,
+      "train_constant": false
+    },
+    {
+      "index": 190,
+      "feature": "l7_code_278_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.7766344609833924e-05,
+      "train_scale": 0.006841259738614292,
+      "train_constant": false
+    },
+    {
+      "index": 191,
+      "feature": "l7_code_284_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.847376825900888e-05,
+      "train_scale": 0.007638237826510485,
+      "train_constant": false
+    },
+    {
+      "index": 192,
+      "feature": "l7_code_285_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.1704237126705855e-05,
+      "train_scale": 0.004645007434837761,
+      "train_constant": false
+    },
+    {
+      "index": 193,
+      "feature": "l7_code_294_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.106879323930857e-07,
+      "train_scale": 0.0007146241470807727,
+      "train_constant": false
+    },
+    {
+      "index": 194,
+      "feature": "l7_code_308_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.6133770150811701e-06,
+      "train_scale": 0.0007501680772713345,
+      "train_constant": false
+    },
+    {
+      "index": 195,
+      "feature": "l7_code_312_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.9916829363329956e-05,
+      "train_scale": 0.004462783064774576,
+      "train_constant": false
+    },
+    {
+      "index": 196,
+      "feature": "l7_code_329_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.9287059786291875e-05,
+      "train_scale": 0.006778112460961823,
+      "train_constant": false
+    },
+    {
+      "index": 197,
+      "feature": "l7_code_331_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.9403036945026098e-10,
+      "train_scale": 2.7151373369331035e-07,
+      "train_constant": false
+    },
+    {
+      "index": 198,
+      "feature": "l7_code_332_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00016974115310593592,
+      "train_scale": 0.012232849756098185,
+      "train_constant": false
+    },
+    {
+      "index": 199,
+      "feature": "l7_code_333_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 7.73692217575536e-05,
+      "train_scale": 0.008773837234174265,
+      "train_constant": false
+    },
+    {
+      "index": 200,
+      "feature": "l7_code_334_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00014699300987381324,
+      "train_scale": 0.012113226025240481,
+      "train_constant": false
+    },
+    {
+      "index": 201,
+      "feature": "l7_code_335_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 3.0641275943585363e-06,
+      "train_scale": 0.0017504622833642144,
+      "train_constant": false
+    },
+    {
+      "index": 202,
+      "feature": "l7_code_343_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.2855542885975787e-05,
+      "train_scale": 0.006411348063474998,
+      "train_constant": false
+    },
+    {
+      "index": 203,
+      "feature": "l7_code_347_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 4.952824806182452e-08,
+      "train_scale": 1.4250082568968636e-05,
+      "train_constant": false
+    },
+    {
+      "index": 204,
+      "feature": "l7_code_351_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.1745822445041065e-05,
+      "train_scale": 0.0034271977592045056,
+      "train_constant": false
+    },
+    {
+      "index": 205,
+      "feature": "l7_code_354_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0005234721536339949,
+      "train_scale": 0.022841482161167725,
+      "train_constant": false
+    },
+    {
+      "index": 206,
+      "feature": "l7_code_359_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.9403036945026098e-10,
+      "train_scale": 2.7151373369331035e-07,
+      "train_constant": false
+    },
+    {
+      "index": 207,
+      "feature": "l7_code_360_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.003137010057846e-05,
+      "train_scale": 0.0030300867468674567,
+      "train_constant": false
+    },
+    {
+      "index": 208,
+      "feature": "l7_code_362_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 3.9518878763812575e-05,
+      "train_scale": 0.006180617146943984,
+      "train_constant": false
+    },
+    {
+      "index": 209,
+      "feature": "l7_code_363_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.9403036945026098e-10,
+      "train_scale": 2.7151373369331035e-07,
+      "train_constant": false
+    },
+    {
+      "index": 210,
+      "feature": "l7_code_365_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.1581672752486285e-06,
+      "train_scale": 0.0006663134677374941,
+      "train_constant": false
+    },
+    {
+      "index": 211,
+      "feature": "l7_code_367_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.000291231305944e-06,
+      "train_scale": 0.0006021818409550754,
+      "train_constant": false
+    },
+    {
+      "index": 212,
+      "feature": "l7_code_370_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.00030742827929860567,
+      "train_scale": 0.016871530109666362,
+      "train_constant": false
+    },
+    {
+      "index": 213,
+      "feature": "l7_code_372_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.9959386691029684e-05,
+      "train_scale": 0.004083066831333092,
+      "train_constant": false
+    },
+    {
+      "index": 214,
+      "feature": "l7_code_374_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.929265522373885e-06,
+      "train_scale": 0.0011544137533204535,
+      "train_constant": false
+    },
+    {
+      "index": 215,
+      "feature": "l7_code_377_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.514615292822553e-05,
+      "train_scale": 0.0036623021682760646,
+      "train_constant": false
+    },
+    {
+      "index": 216,
+      "feature": "l7_code_378_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 6.293971026011602e-05,
+      "train_scale": 0.007619191733974006,
+      "train_constant": false
+    },
+    {
+      "index": 217,
+      "feature": "l7_code_379_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 8.744517572524335e-07,
+      "train_scale": 0.0005016753339216438,
+      "train_constant": false
+    },
+    {
+      "index": 218,
+      "feature": "l7_code_380_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 3.889739751727412e-06,
+      "train_scale": 0.0016872842781396104,
+      "train_constant": false
+    },
+    {
+      "index": 219,
+      "feature": "l7_code_381_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 5.5874486231650145e-05,
+      "train_scale": 0.0065981584719513745,
+      "train_constant": false
+    },
+    {
+      "index": 220,
+      "feature": "l7_code_383_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 3.7312756285581894e-05,
+      "train_scale": 0.005822764154577009,
+      "train_constant": false
+    },
+    {
+      "index": 221,
+      "feature": "l7_code_390_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 2.553439661965368e-06,
+      "train_scale": 0.0015979465391280881,
+      "train_constant": false
+    },
+    {
+      "index": 222,
+      "feature": "l7_code_391_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 6.545565071722953e-05,
+      "train_scale": 0.00652591401046563,
+      "train_constant": false
+    },
+    {
+      "index": 223,
+      "feature": "l7_code_393_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.3788574174613299e-05,
+      "train_scale": 0.0037132713407231166,
+      "train_constant": false
+    },
+    {
+      "index": 224,
+      "feature": "l7_code_394_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.5482355817050782e-05,
+      "train_scale": 0.0037647303451155277,
+      "train_constant": false
+    },
+    {
+      "index": 225,
+      "feature": "l7_code_397_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.2653712102628281e-06,
+      "train_scale": 0.0006830005551346929,
+      "train_constant": false
+    },
+    {
+      "index": 226,
+      "feature": "l7_code_401_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 1.7022931079769526e-07,
+      "train_scale": 0.00023820804902692776,
+      "train_constant": false
+    },
+    {
+      "index": 227,
+      "feature": "l7_UNK_ratio",
+      "family": "L7 ratios",
+      "definition": "Category flow count / all bucket flow starts; UNK contains training-unseen codes.",
+      "log1p": false,
+      "train_mean": 0.0,
+      "train_scale": 1.0,
+      "train_constant": true
+    }
+  ],
+  "checks": [
+    {
+      "check": "Final train N+2P",
+      "expected": 781838,
+      "observed": 781838,
+      "passed": true
+    },
+    {
+      "check": "Final train positive 2P",
+      "expected": 16186,
+      "observed": 16186,
+      "passed": true
+    },
+    {
+      "check": "Original unique flow coverage",
+      "expected": 20115529,
+      "observed": 20115529,
+      "passed": true
+    },
+    {
+      "check": "Original attack flow coverage",
+      "expected": 2600903,
+      "observed": 2600903,
+      "passed": true
+    },
+    {
+      "check": "Retained real plus excluded flow coverage",
+      "expected": 20115529,
+      "observed": 20115529,
+      "passed": true
+    },
+    {
+      "check": "Retained real plus excluded attack coverage",
+      "expected": 2600903,
+      "observed": 2600903,
+      "passed": true
+    },
+    {
+      "check": "Excluded originals in samples",
+      "expected": 0,
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "check": "Inconsistent global 15min block assignments",
+      "expected": 0,
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "check": "Shared global 100s times",
+      "expected": 0,
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "check": "Retained interval overlap sequences",
+      "expected": 0,
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "check": "Cross-split adjacent source pairs",
+      "expected": 0,
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "check": "Attack types missing from train",
+      "expected": 0,
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "check": "Invalid/cross-split/same-source synthetic donors",
+      "expected": 0,
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "check": "Shifted starts outside 100s",
+      "expected": 0,
+      "observed": 0,
+      "passed": true
+    },
+    {
+      "check": "train normalized sequence count",
+      "expected": 781838,
+      "observed": 781838,
+      "passed": true
+    },
+    {
+      "check": "validation normalized sequence count",
+      "expected": 251146,
+      "observed": 251146,
+      "passed": true
+    },
+    {
+      "check": "test normalized sequence count",
+      "expected": 263125,
+      "observed": 263125,
+      "passed": true
+    },
+    {
+      "check": "finite",
+      "expected": true,
+      "observed": true,
+      "passed": true
+    },
+    {
+      "check": "empty_buckets_zero",
+      "expected": true,
+      "observed": true,
+      "passed": true
+    },
+    {
+      "check": "labels_reconciled",
+      "expected": true,
+      "observed": true,
+      "passed": true
+    },
+    {
+      "check": "manifest_reconciled",
+      "expected": true,
+      "observed": true,
+      "passed": true
+    },
+    {
+      "check": "Raw database fingerprint unchanged",
+      "expected": {
+        "path": "D:\\Intern\\NUS\\DSA4266\\project\\DSA4266-Cyber-Security\\datasets\\cic_2018_traffic.db",
+        "bytes": 6574055424,
+        "mtime_ns": "1791617954482244800"
+      },
+      "observed": {
+        "path": "D:\\Intern\\NUS\\DSA4266\\project\\DSA4266-Cyber-Security\\datasets\\cic_2018_traffic.db",
+        "bytes": 6574055424,
+        "mtime_ns": "1791617954482244800"
+      },
+      "passed": true
+    }
+  ]
+}

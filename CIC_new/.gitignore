@@ -1,0 +1,11 @@
+# Large reproducible local datasets, SQLite caches, shards and preview images.
+outputs/
+__pycache__/
+*.pyc
+
+# Small final workbooks and their English explanations live outside outputs/.
+!reports/
+!reports/**
+
+# Keep this after the report exceptions: Office locks are never archived.
+~$*
