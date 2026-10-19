@@ -1,5 +1,11 @@
 # CIC dataset preparation
 
+**Professor-feedback revision:** [vector_v3/README.md](vector_v3/README.md) implements
+sequence -> bucket -> split -> training-only vector-space augmentation, learned
+categorical embeddings and within-sequence circular shifting. It has separate
+preparation/training entry points and requires fresh data. The completed dataset,
+counts, loader and raw-flow pipeline described below remain the historical V2 run.
+
 This directory contains the CIC-only EDA and the bucket builder with feature v1 and split policy v2. It does not train a model.
 The implementation is documented in [preprocessing_v1.md](preprocessing_v1.md).
 The agreed split uses **global 15min blocks**, class-coverage reservations, a **100s guard on both sides** of fold
