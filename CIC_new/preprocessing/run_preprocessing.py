@@ -1,7 +1,7 @@
-"""V3: original sequences -> raw buckets -> split -> train-only fitting.
+"""End-to-end preprocessing: raw data -> sequences -> buckets -> train/val/test.
 
-No augmented records are produced here. Frozen bucket embeddings are combined
-during temporal-model training, not in the raw event table.
+No neural network is trained here. Raw histograms, train-only vocabularies and
+scaling are exported for any downstream representation or prediction model.
 """
 from __future__ import annotations
 
@@ -10,16 +10,12 @@ import itertools
 import json
 from pathlib import Path
 import sqlite3
-import sys
 
 import numpy as np
 
-from CIC_new import bucket_features as bf
+from . import bucket_statistics as bf
 
-# The legacy builder uses script-local imports. Reuse only its original index
-# and split operations, never its raw-flow synthesis or post-split aggregation.
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from CIC_new import build_buckets as legacy
+from . import sequence_index
 
 FIELDS = ("protocol", "l7", "service")
 NUMERIC_SCHEMA = bf.make_schema([])
@@ -52,7 +48,7 @@ def raw_bucket(events):
 
 def aggregate_originals(out,shard_size):
     """All original buckets are computed BEFORE any split/vocabulary/scaler."""
-    conn=legacy.connect(out)
+    conn=sequence_index.connect(out)
     try:
         rawdir=out/"raw_originals";rawdir.mkdir()
         conn.execute("CREATE TABLE v3_raw_locations(sample_id INTEGER PRIMARY KEY,shard TEXT,row_index INTEGER)")
@@ -105,7 +101,7 @@ def selected_distribution(coo,rows,vocabulary,n):
 
 
 def fit_and_export(out):
-    conn=legacy.connect(out)
+    conn=sequence_index.connect(out)
     try:
         split_lookup={int(sid):name for sid,name in conn.execute("SELECT sequence_id,split FROM original_sequences")}
         vocab={f:set() for f in FIELDS};moments=bf.Moments(82)
@@ -120,20 +116,20 @@ def fit_and_export(out):
                     vocab[field].update(map(int,coo[train[coo[:,0]//10],1]))
         vocab={f:sorted(v) for f,v in vocab.items()}
         scaler=moments.finish()
-        legacy.write_json(out/"scaler.json",{**scaler,"population":"real retained training active buckets only"})
+        sequence_index.write_json(out/"scaler.json",{**scaler,"population":"real retained training active buckets only"})
         schema=dict(version=3,numeric_names=bf.NUMERIC_NAMES,vocabularies=vocab,
                     category_slots={f:len(v)+1 for f,v in vocab.items()},unknown_index=0,
                     timesteps=10,bucket_seconds=10,sequence_seconds=100,
                     log1p_columns=NUMERIC_SCHEMA["log1p_columns"],mask_separate=True,
                     augmentation="training-only circular shift then frozen-embedding addition and L2")
-        legacy.write_json(out/"schema.json",schema)
+        sequence_index.write_json(out/"schema.json",schema)
         conn.execute("CREATE TABLE v3_locations(sample_id INTEGER PRIMARY KEY,split TEXT,shard TEXT,row_index INTEGER)")
-        counts={s:0 for s in legacy.SPLITS};parts={s:0 for s in legacy.SPLITS}
-        for split in legacy.SPLITS:(out/"splits"/split).mkdir(parents=True)
+        counts={s:0 for s in sequence_index.SPLITS};parts={s:0 for s in sequence_index.SPLITS}
+        for split in sequence_index.SPLITS:(out/"splits"/split).mkdir(parents=True)
         for file in files:
             with np.load(file,allow_pickle=False) as a:
                 allocation=np.array([split_lookup[int(s)] for s in a["sample_id"]])
-                for split in legacy.SPLITS:
+                for split in sequence_index.SPLITS:
                     rows=np.flatnonzero(allocation==split)
                     if not len(rows):continue
                     payload={key:a[key][rows] for key in ("mask","y_bucket","y_sequence","flow_counts","attack_flow_counts","sample_id")}
@@ -150,7 +146,7 @@ def fit_and_export(out):
         for split,count in counts.items():
             expected=conn.execute("SELECT COUNT(*) FROM original_sequences WHERE split=?",(split,)).fetchone()[0]
             if count!=expected:raise AssertionError("Real original export mismatch")
-        legacy.write_json(out/"v3_counts.json",counts)
+        sequence_index.write_json(out/"v3_counts.json",counts)
         return counts
     finally:conn.close()
 
@@ -180,23 +176,23 @@ def prepare(out,db=None,csv=None,seed=4266,shard_size=2048):
     if bool(db)==bool(csv):raise ValueError("Supply exactly one full-schema --db or --csv")
     if out.exists() and any(out.iterdir()):raise FileExistsError(out)
     out.mkdir(parents=True,exist_ok=True)
-    supplied=Path(db or csv).resolve();signature=legacy.signature(supplied)
+    supplied=Path(db or csv).resolve();signature=sequence_index.signature(supplied)
     manifest=dict(version=3,complete=False,seed=seed,source=signature,
                   order=["sequence_construction","bucket_aggregation","split","training_only_fitting","embedding_space_training_augmentation"],
                   categorical_fields=list(FIELDS),model_training_started=False)
-    legacy.write_json(out/"manifest.json",manifest)
+    sequence_index.write_json(out/"manifest.json",manifest)
     if csv:
         db=out/"raw_source.sqlite";import_csv(Path(csv),db)
     else:db=Path(db).resolve()
-    legacy.index_source(out,db)
+    sequence_index.index_source(out,db)
     aggregate_originals(out,shard_size)
-    legacy.split_originals(out,seed)
+    sequence_index.split_originals(out,seed)
     counts=fit_and_export(out)
-    if signature!=legacy.signature(supplied):raise AssertionError("Source changed")
+    if signature!=sequence_index.signature(supplied):raise AssertionError("Source changed")
     manifest.update(complete=True,counts=counts,
                     split_policy="global 15min blocks; 100s guards and actual-end envelope exclusions",
                     augmentation_materialized=False)
-    legacy.write_json(out/"manifest.json",manifest)
+    sequence_index.write_json(out/"manifest.json",manifest)
     print(json.dumps(manifest,indent=2),flush=True)
 
 

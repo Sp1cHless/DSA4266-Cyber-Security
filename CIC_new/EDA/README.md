@@ -1,12 +1,13 @@
 # CIC exploratory analyses
 
 These scripts describe local NF-CICIDS2018-v3 without editing raw data or training models.
-The final pipeline is [../build_buckets.py](../build_buckets.py); its contract is [../preprocessing_v1.md](../preprocessing_v1.md).
+The current workflow is [../preprocessing/README.md](../preprocessing/README.md).
+These analyses remain research references; their historical candidates/results are not the current embedding pipeline.
 
 ## Runtime and Git
 
 Run from the repository root. EDA 01/02 use the standard library; EDA 03 also needs NumPy.
-Excel uses the automatically resolved bundled Node/artifact-tool runtime; see [../README.md](../README.md#excel-runtime).
+Excel uses the automatically resolved bundled Node/artifact-tool runtime; the current renderer discovers it automatically.
 Override with `--node` and `--node-modules`.
 
 Large caches/catalogs/CSV/JSON/previews remain under ignored `EDA/outputs/`.
@@ -90,7 +91,7 @@ windows, chronological/shuffled whole dates, global 15/30/60min blocks, and 30mi
 Global schemes exclude boundary windows using actual flow ends and a default 100s guard on each side.
 Episode separation is measured at 60/300/900s gaps; these inferred episodes are not verified independent campaigns.
 This EDA does not change the builder or freeze a final split. Exact full-row duplicates are not audited.
-The production builder now separately implements the approved coverage-constrained 15min policy in `../split_policy.py`;
+The production builder now separately implements the approved coverage-constrained 15min policy in `../preprocessing/split_policy.py`;
 its counts are in `../reports/split_policy_v2_preflight.json`. It is not the unconstrained `blocks_15m` EDA candidate.
 
 Excel: Comparison, Composition, Attack coverage, Activity, Episodes, Daily, Isolation, Method.

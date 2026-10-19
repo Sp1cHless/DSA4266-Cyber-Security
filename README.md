@@ -1,264 +1,34 @@
-# DSA4266-Cyber-Security
+# Network traffic time-series project
 
-## Current branch: CIC-only prepared dataset
+The current CIC-IDS2018 workflow is in [CIC_new](CIC_new/README.md), on
+`feature/cic-embedding-superposition`. Start with its preprocessing guide.
 
-This branch, `codex/cic-timeblock-buckets`, contains the CIC EDA, global-time-block split, event superposition,
-bucket features and final build reports. The completed dataset and existing Python environment are retained locally.
-No installation, download or bucket rebuild is needed on this machine:
+The stages are deliberately separate:
 
-```powershell
-.\.venv-cnn\Scripts\python.exe CIC_new/load_dataset.py
-```
+- **Preprocessing:** raw flows → source-IP sequences → ten 10-second buckets →
+  train/validation/test splits → training-only scaling and category vocabularies.
+- **Representation learning:** learn categorical and bucket embeddings on real
+  training data, select the checkpoint on validation, then freeze the encoder.
+- **Dataset export:** circularly shift and add training donor embeddings, apply
+  L2 normalisation, and export reusable inputs. Validation/test stay real-only.
+- **Modelling:** train the chosen detector on the exported inputs. The supplied
+  temporal autoencoder is one optional model; CNN/LSTM/classifier experiments can
+  read the same dataset.
 
-See [CIC_new/README.md](CIC_new/README.md) for data loading, completed-run details and optional rebuilding.
-The older UNSW/CIC pilot paths below remain historical references.
+See [preprocessing](CIC_new/preprocessing/README.md),
+[representation learning](CIC_new/representation_learning/README.md) and
+[modelling](CIC_new/modelling/README.md) for commands and output definitions.
 
-## Project Layout
+Raw data and generated artifacts are not included in Git. Use
+`datasets/NF-CICIDS2018-v3.csv` or a full-schema SQLite source. Keep datasets,
+caches and checkpoints on persistent storage and never run two builders against
+one output directory.
 
-```text
-data_setup/       Optional raw-CSV to SQLite import utilities
-temporal_eda/     Active temporal feature, sequence, and CIC extension builders
-analysis/         Read-only coverage and trained-model diagnostic tools
-docs/             Experiment status and reproducibility notes
-archive/          Historical September EDA scripts and plots; not active pipeline code
-datasets/         Local raw data and SQLite databases; large files are ignored
-experiments/      Local model and audit outputs; ignored
-processed_binary_temporal*/  Local model-ready datasets; ignored
-```
+Earlier CIC raw-flow augmentation and pilot scripts were removed from this branch;
+their source remains on `origin/codex/cic-timeblock-buckets`.
+[CIC EDA](CIC_new/EDA/README.md) and [archived reports](CIC_new/reports/README.md)
+remain as research references. Their historical dataset counts and feature schemas
+do not describe newly generated embedding inputs.
 
-The active UNSW control model entry point is `run_cnn_ae_temporal_control.py`.
-The separate root-level `audit.py` and `preprocess.py` belong to the team's
-flow-level pipeline and are retained for comparison. Current measured progress,
-CICIDS2018 limitations, and database checksums are recorded in
-[`docs/EXPERIMENT_STATUS.md`](docs/EXPERIMENT_STATUS.md).
-
-## Local Dataset Setup
-
-Large source datasets, generated SQLite databases, model-ready arrays, and
-experiment outputs are not committed to Git. Prefer distributing prepared
-artifacts through team shared storage so teammates do not need to repeat the
-hour-long bucket build. Keep the code path below for reproducibility.
-
-Expected local files:
-
-```text
-datasets/NF-UNSW-NB15-v3.csv      # raw dataset, not committed
-datasets/network_traffic.db       # prepared or locally generated UNSW DB
-datasets/NF-CICIDS2018-v3.csv     # optional CIC source data
-datasets/cic_2018_traffic.db      # optional prepared CIC DB
-```
-
-### Preferred: use prepared artifacts
-
-Download the shared database or processed-data package and place each file at
-the path shown above. Verify it against the checksum in
-`docs/EXPERIMENT_STATUS.md`. A teammate who only runs model training needs the
-processed data package, not the SQLite database or raw CSV.
-
-### Optional: rebuild the UNSW database
-
-Put the full dataset CSV here:
-
-```text
-datasets/NF-UNSW-NB15-v3.csv
-```
-
-Create and activate a virtual environment if you have not already:
-
-```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install pandas
-```
-
-From the repository root, run:
-
-```powershell
-python .\data_setup\import_unsw_to_sqlite.py
-```
-
-This reads `datasets/NF-UNSW-NB15-v3.csv` and creates:
-
-```text
-datasets/network_traffic.db
-```
-
-The script creates a table called `network_flows`.
-
-Verify it without requiring the external SQLite command-line program:
-
-```powershell
-python -c "import sqlite3; c=sqlite3.connect(r'datasets/network_traffic.db'); print(c.execute('SELECT COUNT(*) FROM network_flows').fetchone()[0]); c.close()"
-```
-
-### Browse the databases in VS Code
-
-The workspace ships two SQLTools SQLite connections, declared in
-`.vscode/settings.json` (that file is local and not committed):
-
-```text
-CIC-IDS2018 (SQLite)   ->  datasets/cic_2018_traffic.db
-UNSW-NB15 (SQLite)     ->  datasets/network_traffic.db
-```
-
-Connect through the SQLTools view in the Activity Bar, or `Ctrl+Shift+P` ->
-`SQLTools: Connect`. Then open [`sql/cic_explore.sql`](sql/cic_explore.sql), put
-the cursor inside one statement and run it:
-
-```text
-Ctrl+E Ctrl+E    run the statement under the cursor, or the selection
-Ctrl+E Ctrl+S    inspect the records of the table under the cursor
-Ctrl+E Ctrl+D    show the DDL of the table under the cursor
-Ctrl+E Ctrl+B    format the SQL
-```
-
-`SQLTools: Run This File` from the Command Palette executes every statement in
-the file instead. Results open in the SQLTools Results tab, where they can be
-saved as CSV. The Oracle SQL Developer extension only connects to Oracle
-Database and cannot open these SQLite files; the SQLTools SQLite driver opens
-the file read-write, so keep to `SELECT` statements.
-
-## Temporal EDA and Data Processing
-
-Temporal EDA and feature-engineering scripts are kept in `temporal_eda/`. The
-local data pipeline has three levels:
-
-- `network_flows` contains the original raw flow rows and imported columns.
-- `temporal_buckets_10s_full` contains one engineered row per source IP and
-  10-second bucket.
-- `processed_binary_temporal/` contains model-ready fixed-length train/test
-  sequences and their metadata.
-
-Generated database tables and processed files remain local and are ignored by
-Git.
-
-### 1. Build 10-Second Source-IP Buckets
-
-From the repository root, run:
-
-```bash
-python temporal_eda/01_build_temporal_buckets.py
-```
-
-This creates `temporal_buckets_10s_full` without changing `network_flows`.
-Each bucket retains the current numerical flow aggregates and transforms raw
-categorical codes into behavioural features such as protocol ratios,
-distribution diversity/concentration, decoded TCP-flag ratios, and grouped
-ICMP, DNS, and FTP activity. Exact IP addresses, ports, identifiers, and raw
-categorical codes are not used as model inputs. The generated feature order and
-retained frequent L7 categories are recorded in
-`processed_binary_temporal/categorical_schema.json`. Additional continuous
-NetFlow fields are intentionally deferred until their numerical aggregation
-rules are defined.
-
-### 2. Build Host-Disjoint Binary Sequences
-
-```bash
-python temporal_eda/02_build_binary_sequences.py
-```
-
-The script creates two reproducible evaluation rounds under:
-
-```text
-processed_binary_temporal/
-```
-
-Each round keeps source IPs disjoint between training and testing. The benign
-test hosts are selected so their valid sequence count is as close as possible
-to 20% of all benign sequences, with at least two contributing test hosts.
-
-The sequence stride is configured by `STRIDE` in
-`temporal_eda/02_build_binary_sequences.py` and is saved in
-`processed_binary_temporal/split_manifest.json`. Regenerate the sequences after
-changing it; existing NPZ files do not update automatically.
-
-### 3. Optional CICIDS2018 Extension
-
-The CIC builder is exploratory and does not replace the UNSW control pipeline:
-
-```powershell
-python .\temporal_eda\03_build_merged_temporal_dataset.py import
-python .\temporal_eda\03_build_merged_temporal_dataset.py buckets
-python .\temporal_eda\03_build_merged_temporal_dataset.py assemble
-```
-
-It imports CIC into a separate database, reuses the frozen 88-feature schema,
-and creates benign-only train/validation/holdout data under
-`processed_binary_temporal_unsw_cic/`. The current CIC holdout is not a binary
-attack test set.
-
-## Model and Analysis Commands
-
-Run the UNSW CNN autoencoder control:
-
-```powershell
-python .\run_cnn_ae_temporal_control.py --data-dir .\processed_binary_temporal --outdir .\experiments\cnn_ae_temporal_control_seed0 --seed 0
-```
-
-Run read-only audits and diagnostics:
-
-```powershell
-python .\analysis\audit_data_coverage.py
-python .\analysis\audit_cic_coverage.py
-python .\analysis\diagnose_cnn_ae_hosts_v2.py --run-dir .\experiments\cnn_ae_temporal_control_seed0
-```
-
-## Temporal Feature Definitions
-
-Raw flows are grouped by `ipv4_src_addr` and
-`floor(flow_start_milliseconds / 10000)`, producing one row for each source IP
-and 10-second interval. Source IP and `bucket_start_ms` are retained only as
-grouping metadata and are not included in the model input.
-
-For the distribution features below, let `N` be the relevant number of flows,
-`K` the number of distinct observed categories, and `c_max` the count of the
-most common category. The shared definitions are:
-
-```text
-nunique     = K
-reuse_ratio = 0 when N <= 1, otherwise 1 - K/N
-top1_ratio  = c_max/N
-entropy     = 0 when K <= 1, otherwise -sum(p_i * ln(p_i)) / ln(K)
-```
-
-All ratio and entropy features are between 0 and 1. A relevant-flow group that
-does not occur in a bucket produces zeros rather than missing or infinite
-values.
-
-| Feature(s) | How the feature is built within each 10-second bucket |
-|---|---|
-| `flow_count` | Number of raw flows. |
-| `in_bytes_sum`, `out_bytes_sum` | Sum of incoming and outgoing bytes. |
-| `in_pkts_sum`, `out_pkts_sum` | Sum of incoming and outgoing packet counts. |
-| `duration_mean`, `duration_min`, `duration_max` | Mean, minimum, and maximum `flow_duration_milliseconds`. |
-| `protocol_tcp_ratio` | Proportion of all bucket flows where `protocol = 6`. |
-| `protocol_udp_ratio` | Proportion of all bucket flows where `protocol = 17`. |
-| `protocol_other_ratio` | Proportion of all bucket flows using another protocol. |
-| `protocol_nunique` | Number of distinct protocol identifiers. Raw protocol numbers are not model features. |
-| `l7_<category>_ratio` | Proportion of all bucket flows belonging to a retained `l7_proto` category. A category is retained when it occurs in at least 1,000 raw flows globally; selection uses frequency only, not the label. |
-| `l7_other_ratio` | Proportion belonging to non-null L7 categories below the global threshold. |
-| `l7_proto_nunique`, `l7_top1_ratio`, `l7_entropy` | Diversity, concentration, and normalized entropy of the L7 category distribution. `l7_top1_ratio` uses all bucket flows as its denominator. |
-| `src_port_nunique`, `src_port_reuse_ratio`, `src_port_top1_ratio`, `src_port_entropy` | Distribution of source ports. Exact port values are not retained. |
-| `dst_port_nunique`, `dst_port_reuse_ratio`, `dst_port_top1_ratio`, `dst_port_entropy` | Distribution of destination ports. Exact port values are not retained. |
-| `dst_ip_nunique`, `dst_ip_reuse_ratio`, `dst_ip_top1_ratio`, `dst_ip_entropy` | Distribution of contacted destination IPs. Exact destination addresses are not retained. |
-| `tcp_flag_<flag>_ratio` | Proportion of TCP flows whose `tcp_flags` bitmask contains `<flag>`. Separate features are created for FIN, SYN, RST, PSH, ACK, URG, ECE, and CWR. |
-| `client_tcp_flag_<flag>_ratio` | The same eight decoded flag ratios using `client_tcp_flags`. |
-| `server_tcp_flag_<flag>_ratio` | The same eight decoded flag ratios using `server_tcp_flags`. All TCP flag ratios use only TCP flows as the denominator. |
-| `icmp_flow_ratio` | Proportion of all flows where `protocol = 1`. |
-| `icmp_type_nunique`, `icmp_type_top1_ratio`, `icmp_type_entropy` | Distribution of `icmp_ipv4_type` among ICMP flows only. The combined raw `icmp_type` code is dropped. |
-| `dns_flow_ratio` | Proportion of flows with DNS information, defined as any of `dns_query_id`, `dns_query_type`, or `dns_ttl_answer` being nonzero. |
-| `dns_query_type_nunique`, `dns_query_type_top1_ratio`, `dns_query_type_entropy` | Distribution of `dns_query_type` among DNS flows only. `dns_query_id` is never used as a model feature. |
-| `ftp_flow_ratio` | Proportion of flows where `ftp_command_ret_code` is nonzero. |
-| `ftp_1xx_ratio`, `ftp_2xx_ratio`, `ftp_3xx_ratio`, `ftp_4xx_ratio`, `ftp_5xx_ratio`, `ftp_other_code_ratio` | Proportions of FTP flows in each response-code class. Exact FTP response codes are not retained. |
-| `ftp_code_nunique` | Number of distinct nonzero FTP response codes in the bucket. |
-
-For the current dataset, the retained L7 categories are `0`, `1`, `2`, `3`,
-`4`, `5`, `7`, `7.37`, `10.16`, `11`, `13`, `17`, `36`, `37`, `41`, `85`,
-`92`, `115`, `175`, and `370`. Decimal points are replaced by underscores in
-column names, for example `l7_7_37_ratio`.
-
-The bucket target is `label = MAX(label)`, so a bucket is malicious if it
-contains at least one malicious flow. Consecutive buckets from the same source
-IP are then arranged into sequences of 10 buckets. With 88 bucket features, the
-saved model input has shape `(number_of_sequences, 10, 88)`; labels and source
-IP metadata are stored separately from the feature tensor.
+Existing UNSW-NB15 scripts, analyses and experiment notes remain for reference;
+they are not prerequisites for the current CIC pipeline.

@@ -1,4 +1,4 @@
-"""CIC v1 feature definitions and event-level aggregation. No learned embedding."""
+"""Numerical bucket statistics, original-event staging and training-only scaling."""
 from __future__ import annotations
 
 import numpy as np
@@ -151,22 +151,6 @@ def local_events(events, window_start):
     copied[:, E["flow_start_milliseconds"]] -= window_start
     copied[:, E["flow_end_milliseconds"]] -= window_start
     return copied
-
-
-def shift_bounds(events):
-    v = events[:, E["flow_start_milliseconds"]]
-    return -int(v.min()), WINDOW_MS-1-int(v.max())
-
-
-def superimpose(left, right, shift):
-    lo, hi = shift_bounds(right)
-    if not lo <= shift <= hi:
-        raise ValueError("Shift would discard a flow start")
-    shifted = right.copy()
-    shifted[:, E["flow_start_milliseconds"]] += shift
-    shifted[:, E["flow_end_milliseconds"]] += shift
-    merged = np.concatenate([left, shifted])
-    return merged[np.argsort(merged[:, E["flow_start_milliseconds"]], kind="stable")]
 
 
 class Moments:

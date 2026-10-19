@@ -1,7 +1,7 @@
 """Focused boundary and coverage checks for the production global-block policy."""
 import unittest
 import numpy as np
-import split_policy as sp
+from CIC_new.preprocessing import split_policy as sp
 
 
 class PolicyTests(unittest.TestCase):

@@ -6,20 +6,43 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+import subprocess
+import sys
 
 import numpy as np
 import torch
 
-from . import prepare as preparation
-from .prepare import prepare,raw_bucket,selected_distribution,import_csv
-from .data import Originals,Donors,read_json
-from .models import BucketAE,TemporalAE,bucket_loss,rotate,superimpose,sequence_loss
-from .train import train_bucket,encode,train_temporal
-from CIC_new import bucket_features as bf
-from CIC_new.test_build_buckets import event,fixture_database
+from CIC_new.preprocessing import run_preprocessing as preparation
+from CIC_new.preprocessing.run_preprocessing import prepare,raw_bucket,selected_distribution,import_csv
+from CIC_new.preprocessing.dataset import Originals,Donors,ModelInputs,read_json
+from CIC_new.preprocessing.augmentation import rotate,superimpose
+from CIC_new.preprocessing.export_augmented_dataset import export_dataset,iter_model_shards
+from CIC_new.representation_learning.bucket_autoencoder import BucketAE,bucket_loss
+from CIC_new.representation_learning.learn_bucket_embeddings import train_bucket
+from CIC_new.representation_learning.encode_sequences import encode
+from CIC_new.modelling.autoencoder import TemporalAE,sequence_loss
+from CIC_new.modelling.train_autoencoder import train_temporal
+from CIC_new.preprocessing import bucket_statistics as bf
+from CIC_new.tests.fixtures import event,fixture_database
 
 
 class VectorTests(unittest.TestCase):
+    def test_preprocessing_does_not_import_torch(self):
+        code="""import builtins
+original=builtins.__import__
+def checked(name,*args,**kwargs):
+    if name=='torch' or name.startswith('torch.'):
+        raise AssertionError('Preprocessing must not require PyTorch')
+    return original(name,*args,**kwargs)
+builtins.__import__=checked
+import CIC_new.preprocessing.run_preprocessing
+import CIC_new.preprocessing.dataset
+import CIC_new.preprocessing.augmentation
+import CIC_new.preprocessing.export_augmented_dataset
+"""
+        result=subprocess.run([sys.executable,"-c",code],capture_output=True,text=True)
+        self.assertEqual(result.returncode,0,result.stderr)
+
     def test_original_csv_adapter(self):
         import pandas as pd
         import sqlite3
@@ -52,23 +75,23 @@ class VectorTests(unittest.TestCase):
         ya=torch.zeros(1,10,dtype=torch.long);yb=ya.clone();yb[0,9]=1
         ca=ya.clone();cb=ya.clone();ca[0,0]=2;cb[0,9]=3
         z,m,y,c=superimpose(a,b,ma,mb,ya,yb,ca,cb,torch.tensor([1]))
-        np.testing.assert_allclose(z[0,0].numpy(),np.array([1.,1.])/np.sqrt(2),rtol=1e-6)
+        np.testing.assert_allclose(z[0,0],np.array([1.,1.])/np.sqrt(2),rtol=1e-6)
         self.assertEqual(int(c.sum()),5)
         self.assertEqual(int(y.sum()),1)
         self.assertEqual(int(y[0,0]),1)  # Last position wraps to first.
         self.assertEqual(float(m.sum()),1)
-        self.assertTrue(torch.all(z[:,1:]==0))
-        self.assertTrue(torch.isfinite(z).all())
-        np.testing.assert_equal(rotate(c,torch.tensor([3])).numpy(),np.roll(c.numpy(),3,axis=1))
+        self.assertTrue(np.all(z[:,1:]==0))
+        self.assertTrue(np.isfinite(z).all())
+        np.testing.assert_equal(rotate(c,np.array([3])),np.roll(c,3,axis=1))
 
     def test_mixed_batch_multiple_shifts_and_cancellation(self):
         rng=np.random.default_rng(2)
         a=torch.tensor(rng.normal(size=(3,10,4)),dtype=torch.float32);b=-a.clone()
         m=torch.ones(3,10);labels=torch.zeros(3,10,dtype=torch.long);counts=torch.ones_like(labels)
         z,mask,y,c=superimpose(a,b,m,m,labels,labels,counts,counts,torch.tensor([0,1,9]))
-        self.assertTrue(torch.all(z[0]==0))
-        self.assertTrue(torch.isfinite(z).all())
-        self.assertTrue(torch.all(mask==1))  # Zero vector from cancellation is not an empty bucket.
+        self.assertTrue(np.all(z[0]==0))
+        self.assertTrue(np.isfinite(z).all())
+        self.assertTrue(np.all(mask==1))  # Zero vector from cancellation is not an empty bucket.
         self.assertEqual(int(c.sum()),60)
 
     def test_embedding_gradients_and_unknown_zero(self):
@@ -92,12 +115,12 @@ class VectorTests(unittest.TestCase):
             original_hash=hashlib.sha256(db.read_bytes()).hexdigest()
             data=root/"prepared";calls=[]
             aggregate_originals=preparation.aggregate_originals
-            split_originals=preparation.legacy.split_originals
+            split_originals=preparation.sequence_index.split_originals
             def aggregate_first(*args,**kwargs):
                 calls.append("bucket");return aggregate_originals(*args,**kwargs)
             def split_after(*args,**kwargs):
                 calls.append("split");return split_originals(*args,**kwargs)
-            with patch.object(preparation,"aggregate_originals",side_effect=aggregate_first),patch.object(preparation.legacy,"split_originals",side_effect=split_after):
+            with patch.object(preparation,"aggregate_originals",side_effect=aggregate_first),patch.object(preparation.sequence_index,"split_originals",side_effect=split_after):
                 prepare(data,db=db,shard_size=17)
             self.assertEqual(calls,["bucket","split"])
             manifest=read_json(data/"manifest.json")
@@ -134,20 +157,45 @@ class VectorTests(unittest.TestCase):
             saved=bucket/"best.pt";before=hashlib.sha256(saved.read_bytes()).hexdigest()
             encoded=root/"encoded"
             encode(SimpleNamespace(**base,out=encoded,checkpoint=saved,splits=["train","validation"],stage="encode"))
+            # Default encoding excludes test; explicit frozen inference follows.
+            self.assertFalse((encoded/"test").exists())
+            # Inference with an already frozen encoder, not fitting on test.
+            all_encoded=root/"all_encoded"
+            encode(SimpleNamespace(**base,out=all_encoded,checkpoint=saved,splits=["train","validation","test"],stage="encode"))
+            exported=root/"model_inputs"
+            export_dataset(data,all_encoded,exported,shard_size=19)
+            stats=read_json(exported/"manifest.json")
+            P=int(train.meta["label"].sum())
+            self.assertEqual(stats["total_samples"]["train"],len(train.meta)+2*P)
+            self.assertEqual(stats["counts"]["train"]["synthetic_malicious"],P)
+            for split in ("validation","test"):
+                self.assertFalse(any(k.startswith("synthetic") for k in stats["counts"][split]))
+            inputs=ModelInputs(exported,"train")
+            drawn=next(inputs.batches(16,1))
+            self.assertEqual(int(drawn["y_sequence"].sum()),8)
+            self.assertEqual(set(np.unique(drawn["sample_type"],return_counts=True)[1]),{4})
+            with self.assertRaises(ValueError):
+                next(ModelInputs(exported,"validation").batches(16,1))
+            for shard in iter_model_shards(exported,"train"):
+                self.assertEqual(shard["X"].shape[1:],(10,9))
+                self.assertTrue(np.all(shard["X"][shard["mask"]==0]==0))
+                synth=shard["right_id"]>=0
+                for left,right in zip(shard["left_id"][synth],shard["right_id"][synth]):
+                    a=train.meta[np.searchsorted(train.meta["id"],left)]
+                    b=train.meta[np.searchsorted(train.meta["id"],right)]
+                    self.assertNotEqual(a["ip"],b["ip"])
             temporal=root/"temporal"
-            train_temporal(SimpleNamespace(**base,out=temporal,encoded=encoded,epochs=1,steps_per_epoch=2,
-                           width=4,latent=3,log_every=1,val_limit=16,lr=.001,real_only=False,stage="temporal"))
+            model_base=dict(dataset=exported,device="cpu",seed=1,cpu_threads=1,batch_size=8,
+                            epochs=1,steps_per_epoch=2,width=4,latent=3,log_every=1,val_limit=16,lr=.001)
+            train_temporal(SimpleNamespace(**model_base,out=temporal,real_only=False))
             self.assertEqual(hashlib.sha256(saved.read_bytes()).hexdigest(),before)
             self.assertFalse(read_json(temporal/"summary.json")["test_used"])
             vectors=np.loadtxt(temporal/"projector_validation/vectors.tsv",delimiter="\t")
             self.assertEqual(vectors.shape,(16,3))
             self.assertEqual(read_json(temporal/"config.json")["model"]["features"],9)
             self.assertEqual(len((temporal/"projector_validation/metadata.tsv").read_text().splitlines()),17)
-            # Both stages should have touched training/validation only.
-            self.assertFalse((encoded/"test").exists())
             real_only=root/"real_only"
-            train_temporal(SimpleNamespace(**base,out=real_only,encoded=encoded,epochs=1,steps_per_epoch=2,
-                           width=4,latent=3,log_every=1,val_limit=16,lr=.001,real_only=True,stage="temporal"))
+            train_temporal(SimpleNamespace(**model_base,out=real_only,real_only=True))
             np.testing.assert_array_equal(np.load(temporal/"validation_ids.npy"),np.load(real_only/"validation_ids.npy"))
             self.assertEqual(read_json(temporal/"config.json")["embedding_checkpoint_sha256"],
                              read_json(real_only/"config.json")["embedding_checkpoint_sha256"])

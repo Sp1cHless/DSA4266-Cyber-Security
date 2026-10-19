@@ -1,4 +1,4 @@
-"""Disk-backed originals and a training-only donor sampler. No raw-flow merging."""
+"""Model-independent original-data loading and training-only donor selection."""
 from collections import defaultdict
 import hashlib
 import json
@@ -130,3 +130,56 @@ class Donors:
                         generation_cycle=(self.draw-1)//(2*len(self.positive))))
         order=self.rng.permutation(size)
         return np.array(left)[order],np.array(right)[order],np.array(shift)[order],[provenance[i] for i in order]
+
+
+class ModelInputs:
+    """Any model can read the SAME final X/mask/labels; no embedding fitting here."""
+    def __init__(self,folder,split):
+        self.folder=Path(folder).resolve();self.split=split
+        self.manifest=read_json(self.folder/"manifest.json")
+        if self.manifest.get("format")!="model-independent-sequence-shards" or not self.manifest.get("complete"):
+            raise ValueError("Export the final model-input dataset first")
+        if split not in ("train","validation","test"):raise ValueError(split)
+        n=self.manifest["total_samples"][split];t=self.manifest["timesteps"];d=self.manifest["feature_width"]
+        specifications={"X":(np.float32,(n,t,d)),"mask":(np.float32,(n,t)),
+            "y_sequence":(np.int64,(n,)),"sample_id":(np.int64,(n,)),"sample_type":("U20",(n,)),
+            "left_id":(np.int64,(n,)),"right_id":(np.int64,(n,)),"right_shift_buckets":(np.int64,(n,)),
+            "left_ip":("U15",(n,)),"right_ip":("U15",(n,)),"primary_attack":("U64",(n,))}
+        cache=self.folder/"model_cache"/split
+        identity=hashlib.sha256((self.folder/"manifest.json").read_bytes()).hexdigest()
+        if not cache.exists():
+            partial=cache.with_name(split+".partial")
+            if partial.exists():raise FileExistsError(f"Interrupted/concurrent model cache: {partial}")
+            partial.mkdir(parents=True)
+            arrays={k:np.lib.format.open_memmap(partial/(k+".npy"),mode="w+",dtype=dtype,shape=shape)
+                    for k,(dtype,shape) in specifications.items()}
+            offset=0
+            for file in sorted((self.folder/split).glob("part_*.npz")):
+                with np.load(file,allow_pickle=False) as a:
+                    count=len(a["sample_id"])
+                    if offset+count>n:raise AssertionError("Too many exported examples")
+                    for k,target in arrays.items():target[offset:offset+count]=a[k]
+                    offset+=count
+            if offset!=n:raise AssertionError("Missing exported examples")
+            for a in arrays.values():a.flush();a._mmap.close()
+            del arrays
+            (partial/"identity.json").write_text(json.dumps(dict(fingerprint=identity,n=n)))
+            partial.rename(cache)
+        if read_json(cache/"identity.json")!=dict(fingerprint=identity,n=n):raise ValueError("Stale model-input cache")
+        self.arrays={k:np.load(cache/(k+".npy"),mmap_mode="r") for k in specifications}
+
+    def __len__(self):return len(self.arrays["sample_id"])
+
+    def take(self,indices):return {k:np.array(a[indices],copy=True) for k,a in self.arrays.items()}
+
+    def batches(self,batch_size,steps,seed=4266,real_only=False):
+        """Optional balanced sampling; exporting itself does not force batch priors."""
+        if self.split!="train":raise ValueError("Balanced batches are training-only")
+        if batch_size<4 or batch_size%4 or steps<1:raise ValueError("Positive steps and batch size divisible by four required")
+        kinds=("real_benign","real_malicious") if real_only else ("real_benign","synthetic_benign","real_malicious","synthetic_malicious")
+        pools=[np.flatnonzero(self.arrays["sample_type"]==k) for k in kinds]
+        if any(not len(p) for p in pools):raise ValueError("Requested sample group absent; export augmentation or use real-only")
+        rng=np.random.default_rng(seed)
+        for _ in range(steps):
+            ids=np.concatenate([rng.choice(p,batch_size//len(pools),replace=True) for p in pools])
+            rng.shuffle(ids);yield self.take(ids)
