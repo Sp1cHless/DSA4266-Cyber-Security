@@ -14,6 +14,13 @@ datasets/f78acbaa2afe1595_NFV3DATA-A11964_A11964/
 datasets/*.db
 datasets/*.db-*
 datasets/.DS_Store
+/datasets/dataset/
+
+# Shared Scheme2 model screening data caches and unique experiment outputs.
+/train/cache/
+/train/runs/
+/train/*/runs/
+/train/tests/artifacts/
 
 # Reproducible generated data and experiment artifacts
 processed_binary_temporal*/
