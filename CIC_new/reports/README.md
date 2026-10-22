@@ -1,10 +1,18 @@
 # Historical report archive
 
+The selected method and completed Scheme1/Scheme2 comparisons are recorded in
+[superimposition_comparison_20261022/SUMMARY.md](superimposition_comparison_20261022/SUMMARY.md).
+That subfolder shares SUMMARY.md, TEST_RESULTS.md and test_metrics.json. The full
+evidence tree and machine-specific cleanup audits remain local and are ignored
+by the root .gitignore. Scheme2's completed training and real-test results remain
+available in the shared reports without uploading datasets or model weights.
+
 These files describe earlier EDA and V2 raw-flow superposition. Their schemas,
 counts and checks do not validate the current embedding pipeline. The earlier
 builder is retained on `origin/codex/cic-timeblock-buckets`.
 
-This directory is deliberately not ignored.
+Curated reports are eligible for version control. Generated evidence and runtime
+dependencies are excluded; do not add a blanket exception for every report file.
 
 - `EDA/` contains the first three full-data exploratory workbooks archived from local ignored output folders,
   plus `04_splits_<timestamp>/` with the split comparison workbook, machine-readable results and English guide.

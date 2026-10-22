@@ -1,5 +1,14 @@
 # Preprocessing: raw CIC data to reusable datasets
 
+This is the shared preprocessing used by the selected Scheme2 method. The direct
+database-to-dataset entry point is [prepare_scheme2_dataset.py](../SCHEME2_DATASET.md).
+The alternative [Scheme1 guide](../scheme1/README.md) is retained for historical reproduction.
+
+For normal use, follow the direct entry point above. The module commands below
+expose individual stages; they do not register a completed scheme2_runs workflow
+or run its full export validator. Their outputs can be used with explicit paths
+by the corresponding lower-level modules.
+
 Preprocessing does not train a prediction model. The main command runs the whole
 raw-data preparation path:
 
@@ -16,10 +25,8 @@ Raw CSV / full-schema SQLite
 
 From the repository root:
 
-```bash
-python -m CIC_new.preprocessing.run_preprocessing \
-  --csv datasets/NF-CICIDS2018-v3.csv \
-  --out CIC_new/outputs/preprocessed
+```powershell
+.\.venv-cnn\Scripts\python.exe -m CIC_new.preprocessing.run_preprocessing --csv datasets/NF-CICIDS2018-v3.csv --out CIC_new/outputs/preprocessed
 ```
 
 Alternatively use `--db datasets/cic_2018_traffic.db`, supplying exactly one source.
@@ -68,18 +75,21 @@ can be substituted if they export the same frozen-sequence contract.
 
 After separately learning and freezing embeddings and encoding all three splits:
 
-```bash
-python -m CIC_new.preprocessing.export_augmented_dataset \
-  --data CIC_new/outputs/preprocessed \
-  --encoded CIC_new/outputs/encoded_sequences \
-  --out CIC_new/outputs/model_inputs
+```powershell
+.\.venv-cnn\Scripts\python.exe -m CIC_new.preprocessing.export_augmented_dataset --data CIC_new/outputs/preprocessed --encoded CIC_new/outputs/encoded_sequences --out CIC_new/outputs/model_inputs --shift-mode none
 ```
 
 This command runs on NumPy, with no model training. It retains all real originals,
 adds P synthetic benign and P synthetic malicious examples to TRAIN, and exports
 real-only validation and test. P is the original malicious training count. Use
-`--originals-only` for an unaugmented export and `--shift-mode none` for a zero-shift
-mixing control. Fresh output directories prevent overwriting previous data.
+`--originals-only` for an unaugmented export. The current experiment uses
+`--shift-mode none`, as shown above. The low-level exporter defaults to circular
+shifting if this flag is omitted; `--shift-mode circular` is an optional separate
+experiment. Fresh output directories prevent overwriting previous data.
+
+The direct Scheme2 builder uses the established frozen donor-selection policy.
+The standalone exporter samples its own plan unless `--donor-plan <plan.npz>` is
+provided. Matching the shift mode alone does not guarantee identical donor pairs.
 
 ```text
 model_inputs/
@@ -123,9 +133,11 @@ and naturally distributed.
 
 ## Augmentation definition
 
-`augmentation.py` rotates donor B along its ten time positions, adds the two
-bucket embedding vectors and L2-normalises each resulting vector. Masks, bucket
-labels and counts follow the same rotation. All flow starts/positions survive;
+`augmentation.py` supports rotating donor B along its ten time positions, adding
+the two bucket embedding vectors and L2-normalising each resulting vector. The
+current zero-shift configuration adds corresponding bucket positions without
+rotation. When circular shifting is enabled, masks, bucket labels and counts
+follow the same rotation. All flow starts/positions survive;
 there is no raw-record merging, cropping or shift of entire capture days.
 Empty positions are zeroed. Cancellation of active vectors does not mark them empty.
 
@@ -134,8 +146,8 @@ to the intended synthetic label. Both are retained training originals from
 different source IPs. Backgrounds are sampled by uniform available occupancy
 band (1, 2–4, 5–10), then source, then sequence; positives by family/source/sequence.
 Reuse is allowed. P variants do not mean P new independent attacks or guarantee
-every original attack was selected once. Rotation is uniform over 0..9, including
-zero. It preserves cyclic order but introduces an artificial end/start join;
+every original attack was selected once. With circular shifting enabled, rotation
+is uniform over 0..9, including zero. It preserves cyclic order but introduces an artificial end/start join;
 rotation alone does not reduce the number of empty buckets.
 
 Numerical feature vectors are not added: means and entropies are not additive.
@@ -164,7 +176,9 @@ and the old 24-feature experiment are different inputs. They are not substitutes
 Allow tens of GB of persistent free disk for full preparation, raw caches,
 histograms, encoded originals and exported/mmap model inputs. Use `df -h` before
 building. No full-corpus runtime or GPU speed claim is established by fixture
-tests. New commands require fresh output directories; there is no exact stage or
-optimiser resume. Do not run concurrent builders against one cache/output.
+tests. Individual modules require fresh output directories and do not resume
+optimizers. The direct Scheme2 builder separately supports reusing completed
+stages with matching settings via `--resume`; see its guide. Do not run concurrent
+builders against one cache/output.
 
 Tests: `python -m unittest CIC_new.tests.test_embedding_pipeline -v`.

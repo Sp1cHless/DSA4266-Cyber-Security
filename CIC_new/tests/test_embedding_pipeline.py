@@ -1,6 +1,7 @@
 """Small fixtures only: no full CIC scan and no remote/paid compute."""
 import hashlib
 import json
+from contextlib import ExitStack
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -110,7 +111,7 @@ import CIC_new.preprocessing.export_augmented_dataset
         self.assertEqual(temporal.encode(inp,mask).shape,(2,3))
 
     def test_full_small_pipeline_and_frozen_targets(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with tempfile.TemporaryDirectory() as temp, ExitStack() as stores:
             root=Path(temp);db=root/"fixture.sqlite";fixture_database(db)
             original_hash=hashlib.sha256(db.read_bytes()).hexdigest()
             data=root/"prepared";calls=[]
@@ -128,7 +129,7 @@ import CIC_new.preprocessing.export_augmented_dataset
             self.assertEqual(hashlib.sha256(db.read_bytes()).hexdigest(),original_hash)
             self.assertFalse(manifest["augmentation_materialized"])
             self.assertNotIn(999,read_json(data/"schema.json")["vocabularies"]["l7"])
-            train=Originals(data,"train");val=Originals(data,"validation")
+            train=stores.enter_context(Originals(data,"train"));val=stores.enter_context(Originals(data,"validation"))
             active=train.arrays["mask"].astype(bool)
             np.testing.assert_allclose(train.arrays["numeric"][active].mean(axis=0),0,atol=2e-5)
             self.assertFalse(set(train.meta["id"])&set(val.meta["id"]))
@@ -170,7 +171,7 @@ import CIC_new.preprocessing.export_augmented_dataset
             self.assertEqual(stats["counts"]["train"]["synthetic_malicious"],P)
             for split in ("validation","test"):
                 self.assertFalse(any(k.startswith("synthetic") for k in stats["counts"][split]))
-            inputs=ModelInputs(exported,"train")
+            inputs=stores.enter_context(ModelInputs(exported,"train"))
             drawn=next(inputs.batches(16,1))
             self.assertEqual(int(drawn["y_sequence"].sum()),8)
             self.assertEqual(set(np.unique(drawn["sample_type"],return_counts=True)[1]),{4})

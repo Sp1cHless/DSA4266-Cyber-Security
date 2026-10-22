@@ -1,34 +1,58 @@
 # Network traffic time-series project
 
-The current CIC-IDS2018 workflow is in [CIC_new](CIC_new/README.md), on
-`feature/cic-embedding-superposition`. Start with its preprocessing guide.
+**Scheme2 is the selected CIC-IDS2018 superimposition method.** It freezes learned
+whole-bucket embeddings, adds donor vectors, applies L2 normalization and retains
+a separate flow-count channel. The current configuration uses 16-dimensional
+tables for protocol, L7 and destination-service categories, 64-dimensional bucket vectors, 65 final input
+features, zero displacement and the approximate 6:2:2 time-block split.
 
-The stages are deliberately separate:
+**Scheme2 has completed one full temporal-AE training run, validation and a real
+held-out test evaluation.** The run was conducted during method comparison and
+serves as the current Scheme2 experimental baseline for reporting and subsequent
+work. Test ROC-AUC was 0.84948 and average precision was 14.93%, using a frozen
+AE and a linear readout fitted on real training data. See
+[the completed run and results](CIC_new/SCHEME2_EXPERIMENT.md) for metrics,
+artifact locations and evaluation scope.
 
-- **Preprocessing:** raw flows → source-IP sequences → ten 10-second buckets →
-  train/validation/test splits → training-only scaling and category vocabularies.
-- **Representation learning:** learn categorical and bucket embeddings on real
-  training data, select the checkpoint on validation, then freeze the encoder.
-- **Dataset export:** circularly shift and add training donor embeddings, apply
-  L2 normalisation, and export reusable inputs. Validation/test stay real-only.
-- **Modelling:** train the chosen detector on the exported inputs. The supplied
-  temporal autoencoder is one optional model; CNN/LSTM/classifier experiments can
-  read the same dataset.
+For a fresh checkout, create an environment from the repository root in a Windows
+VS Code terminal. Skip creation if you already have a suitable environment:
 
-See [preprocessing](CIC_new/preprocessing/README.md),
-[representation learning](CIC_new/representation_learning/README.md) and
-[modelling](CIC_new/modelling/README.md) for commands and output definitions.
+```powershell
+python -m venv .venv-cnn
+.\.venv-cnn\Scripts\python.exe -m pip install -r CIC_new\preprocessing\requirements.txt
+.\.venv-cnn\Scripts\python.exe -m pip install torch
+```
 
-Raw data and generated artifacts are not included in Git. Use
-`datasets/NF-CICIDS2018-v3.csv` or a full-schema SQLite source. Keep datasets,
-caches and checkpoints on persistent storage and never run two builders against
-one output directory.
+The environment, source data and completed outputs are not included in Git.
+Obtain the team's full-schema `cic_2018_traffic.db` and place it in `datasets/`;
+the default source table is `network_flows`. For another database location, pass
+`--db <path>`. The [preprocessing guide](CIC_new/preprocessing/README.md) also
+documents CSV input through the individual stage commands.
 
-Earlier CIC raw-flow augmentation and pilot scripts were removed from this branch;
-their source remains on `origin/codex/cic-timeblock-buckets`.
-[CIC EDA](CIC_new/EDA/README.md) and [archived reports](CIC_new/reports/README.md)
-remain as research references. Their historical dataset counts and feature schemas
-do not describe newly generated embedding inputs.
+Run the active workflow from the repository root:
 
-Existing UNSW-NB15 scripts, analyses and experiment notes remain for reference;
-they are not prerequisites for the current CIC pipeline.
+```powershell
+# Build a NEW dataset only when regeneration is needed.
+.\.venv-cnn\Scripts\python.exe -u CIC_new\prepare_scheme2_dataset.py
+# Check the latest completed dataset without training.
+.\.venv-cnn\Scripts\python.exe CIC_new\run_scheme2_experiment.py --stage check
+# Train a NEW AE run, then evaluate its frozen checkpoint on validation.
+.\.venv-cnn\Scripts\python.exe -u CIC_new\run_scheme2_experiment.py
+```
+
+On the experiment machine, completed Scheme2 data and models are under
+`CIC_new/outputs/`. Other members must obtain the completed dataset separately or
+build it from the source; cloning the repository does not download these files.
+When using a shared dataset, pass `--dataset <dataset-directory>` explicitly to
+the check/training command. Copy the entire final `dataset/` directory, including
+its manifests, donor plan, metadata sidecars and train/validation/test shards.
+New builds, training runs and evaluations use separate identifiable directories.
+See [CIC_new/README.md](CIC_new/README.md) for the directory map and stage commands.
+Scheme1 is retained as source for historical reproduction. Shared conclusions
+and test reports are in
+[the comparison archive](CIC_new/reports/superimposition_comparison_20261022/SUMMARY.md).
+Full evidence, configurations, histories and cleanup audits remain in the ignored
+local portion of that archive. Ignore rules are centralized in the root .gitignore.
+Historical EDA and unrelated UNSW/temporal experiments remain in their existing
+folders. Raw datasets, virtual environments and generated outputs are local and
+ignored by Git. Project files are written in English.

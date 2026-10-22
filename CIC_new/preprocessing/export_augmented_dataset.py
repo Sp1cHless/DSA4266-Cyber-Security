@@ -5,6 +5,7 @@ CNN or LSTM. Only the training split receives synthetic samples.
 """
 import argparse
 from collections import Counter
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -42,10 +43,50 @@ class Writer:
         self.part+=1;self.rows.clear()
 
 
-def export_dataset(data,encoded,out,seed=4266,shard_size=2048,shift_mode="circular",originals_only=False):
+def export_fixed_plan(data,train,writer,path,shift_mode):
+    """Use exact existing donor IDs without changing vector-space composition."""
+    with np.load(path,allow_pickle=False) as archive:
+        plan={k:archive[k] for k in archive.files}
+    required=("sample_id","sample_type","left_id","right_id","right_shift_buckets")
+    P=int(train.meta["label"].sum());n=2*P
+    if any(k not in plan or plan[k].shape!=(n,) for k in required):
+        raise ValueError("A fixed donor plan must contain exactly 2P rows")
+    for kind in ("synthetic_benign","synthetic_malicious"):
+        if np.count_nonzero(plan["sample_type"]==kind)!=P:raise ValueError("Plan budget is not P per synthetic class")
+    connection=sqlite3.connect(f"file:{data/'manifest.sqlite'}?mode=ro",uri=True)
+    try:maximum=connection.execute("SELECT MAX(sequence_id) FROM original_sequences").fetchone()[0]
+    finally:connection.close()
+    if not np.array_equal(plan["sample_id"],np.arange(maximum+1,maximum+1+n)):
+        raise ValueError("Plan synthetic IDs do not match original sequence ownership")
+    left=np.searchsorted(train.meta["id"],plan["left_id"])
+    right=np.searchsorted(train.meta["id"],plan["right_id"])
+    if np.any(left>=len(train.meta)) or np.any(right>=len(train.meta)):
+        raise ValueError("Plan donor outside real train")
+    if not np.array_equal(train.meta["id"][left],plan["left_id"]) or not np.array_equal(train.meta["id"][right],plan["right_id"]):
+        raise ValueError("Plan donor outside real train")
+    if np.any(train.meta["label"][left]) or np.any(train.meta["ip"][left]==train.meta["ip"][right]):
+        raise ValueError("Plan needs a benign first donor and different source IPs")
+    malicious=plan["sample_type"]=="synthetic_malicious"
+    if not np.array_equal(train.meta["label"][right].astype(bool),malicious):
+        raise ValueError("Plan class does not match second donor")
+    shifts=plan["right_shift_buckets"]
+    if np.any(shifts<0) or np.any(shifts>=10) or (shift_mode=="none" and np.any(shifts)):
+        raise ValueError("Plan shifts do not match requested mode")
+    for start in range(0,n,128):
+        end=min(start+128,n)
+        x,mask,y,y_bucket,counts=mixed_batch(train,left[start:end],right[start:end],shifts[start:end],return_details=True)
+        for j,i in enumerate(range(start,end)):
+            writer.append(x[j],mask[j],int(y[j]),y_bucket[j],counts[j],int(plan["sample_id"][i]),
+                str(plan["sample_type"][i]),int(plan["left_id"][i]),int(plan["right_id"][i]),int(shifts[i]),
+                str(train.meta[left[i]]["ip"]),str(train.meta[right[i]]["ip"]),
+                str(train.meta[right[i]]["attack"]) if malicious[i] else "Benign")
+
+
+def export_dataset(data,encoded,out,seed=4266,shard_size=2048,shift_mode="circular",originals_only=False,donor_plan=None):
     data=Path(data).resolve();encoded=Path(encoded).resolve();out=Path(out).resolve()
     if shift_mode not in ("circular","none"):raise ValueError("Unknown shift mode")
     if shard_size<1:raise ValueError("Positive shard size required")
+    if originals_only and donor_plan is not None:raise ValueError("An originals-only export cannot use a donor plan")
     if out.exists() and any(out.iterdir()):raise FileExistsError(out)
     stores={s:Encoded(encoded,s) for s in ("train","validation","test")}
     identity=fingerprint(data)
@@ -67,7 +108,14 @@ def export_dataset(data,encoded,out,seed=4266,shard_size=2048,shift_mode="circul
                     left_ip=str(store.meta[i]["ip"]),attack=str(store.meta[i]["attack"]))
         print(f"[export {split}] {len(store.meta):,} real sequences",flush=True)
     train=stores["train"];P=int(train.meta["label"].sum())
-    if not originals_only:
+    if donor_plan is not None:
+        donor_plan=Path(donor_plan).resolve()
+        export_fixed_plan(data,train,writers["train"],donor_plan,shift_mode)
+        shutil.copy2(donor_plan,out/"donor_plan.npz")
+        manifest.update(donor_selection="external frozen plan; seed does not resample donors",
+                        donor_plan_source=str(donor_plan),
+                        donor_plan_sha256=hashlib.sha256(donor_plan.read_bytes()).hexdigest())
+    elif not originals_only:
         donors=Donors(data,train.meta,seed)
         conn=sqlite3.connect(f"file:{data/'manifest.sqlite'}?mode=ro",uri=True)
         try:next_id=int(conn.execute("SELECT MAX(sequence_id) FROM original_sequences").fetchone()[0])+1
@@ -116,4 +164,5 @@ if __name__=="__main__":
     p.add_argument("--out",type=Path,required=True);p.add_argument("--seed",type=int,default=4266)
     p.add_argument("--shard-size",type=int,default=2048);p.add_argument("--originals-only",action="store_true")
     p.add_argument("--shift-mode",choices=["circular","none"],default="circular")
-    args=p.parse_args();export_dataset(args.data,args.encoded,args.out,args.seed,args.shard_size,args.shift_mode,args.originals_only)
+    p.add_argument("--donor-plan",type=Path,help="Reuse exact synthetic IDs and training donor pairs from another exported dataset")
+    args=p.parse_args();export_dataset(args.data,args.encoded,args.out,args.seed,args.shard_size,args.shift_mode,args.originals_only,args.donor_plan)

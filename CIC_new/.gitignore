@@ -1,11 +1,2 @@
-# Large reproducible local datasets, SQLite caches, shards and preview images.
-outputs/
-__pycache__/
-*.pyc
-
-# Small final workbooks and their English explanations live outside outputs/.
-!reports/
-!reports/**
-
-# Keep this after the report exceptions: Office locks are never archived.
-~$*
+# Generated-output and local-archive rules are centralized in ../.gitignore.
+# Source code and curated reports remain eligible for version control.

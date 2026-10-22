@@ -32,7 +32,20 @@ def metadata(data,split):
     finally:conn.close()
 
 
-class Originals:
+class MappedArrays:
+    """Explicit mmap lifetime, particularly for Windows directory cleanup."""
+    def close(self):
+        for array in getattr(self,"arrays",{}).values():
+            mapping=getattr(array,"_mmap",None)
+            if mapping is not None and not mapping.closed:mapping.close()
+        self.arrays={}
+
+    def __enter__(self):return self
+
+    def __exit__(self,*exc):self.close()
+
+
+class Originals(MappedArrays):
     """Normalised originals cached once as mmap arrays for fast random batches.
 
     NPZ decompression happens once, not for every random donor. Caches can be
@@ -132,11 +145,24 @@ class Donors:
         return np.array(left)[order],np.array(right)[order],np.array(shift)[order],[provenance[i] for i in order]
 
 
-class ModelInputs:
+def transform_model_inputs(x,mask,mode="none"):
+    """Stateless final-input transforms; never modify shared arrays or fit data."""
+    if mode=="none":return x
+    if mode!="bucket_l2":raise ValueError(f"Unknown input transform: {mode}")
+    if not np.isfinite(x).all():raise ValueError("Nonfinite input before bucket L2")
+    norms=np.linalg.norm(x.astype(np.float64),axis=-1,keepdims=True)
+    return ((x/np.maximum(norms,1e-8))*mask[...,None]).astype(np.float32)
+
+
+class ModelInputs(MappedArrays):
     """Any model can read the SAME final X/mask/labels; no embedding fitting here."""
-    def __init__(self,folder,split):
+    def __init__(self,folder,split,input_transform="none"):
         self.folder=Path(folder).resolve();self.split=split
         self.manifest=read_json(self.folder/"manifest.json")
+        if input_transform not in ("none","bucket_l2"):raise ValueError("Unknown input transform")
+        if input_transform=="bucket_l2" and self.manifest.get("representation")!="scheme1":
+            raise ValueError("The bucket_l2 ablation requires scheme1 inputs")
+        self.input_transform=input_transform
         if self.manifest.get("format")!="model-independent-sequence-shards" or not self.manifest.get("complete"):
             raise ValueError("Export the final model-input dataset first")
         if split not in ("train","validation","test"):raise ValueError(split)
@@ -170,7 +196,10 @@ class ModelInputs:
 
     def __len__(self):return len(self.arrays["sample_id"])
 
-    def take(self,indices):return {k:np.array(a[indices],copy=True) for k,a in self.arrays.items()}
+    def take(self,indices):
+        batch={k:np.array(a[indices],copy=True) for k,a in self.arrays.items()}
+        batch["X"]=transform_model_inputs(batch["X"],batch["mask"],self.input_transform)
+        return batch
 
     def batches(self,batch_size,steps,seed=4266,real_only=False):
         """Optional balanced sampling; exporting itself does not force batch priors."""

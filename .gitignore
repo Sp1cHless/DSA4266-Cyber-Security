@@ -4,6 +4,8 @@ __pycache__/
 .venv*/
 .vscode/
 .matplotlib-cache/
+node_modules/
+~$*
 
 # Large local datasets and generated SQLite databases
 datasets/NF-UNSW-NB15-v3.csv
@@ -16,3 +18,14 @@ datasets/.DS_Store
 # Reproducible generated data and experiment artifacts
 processed_binary_temporal*/
 experiments/
+
+# CIC generated outputs at every workflow depth stay local.
+/CIC_new/**/outputs/
+/CIC_new/maintenance/
+
+# Full comparison evidence, runtime snapshots and machine-specific cleanup audits
+# remain in the local archive. Share only the curated conclusions and test results.
+/CIC_new/reports/superimposition_comparison_20261022/*
+!/CIC_new/reports/superimposition_comparison_20261022/SUMMARY.md
+!/CIC_new/reports/superimposition_comparison_20261022/TEST_RESULTS.md
+!/CIC_new/reports/superimposition_comparison_20261022/test_metrics.json
