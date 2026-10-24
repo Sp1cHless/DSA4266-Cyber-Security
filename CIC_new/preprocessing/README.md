@@ -1,184 +1,79 @@
-# Preprocessing: raw CIC data to reusable datasets
+# Scheme2 preprocessing and export
 
-This is the shared preprocessing used by the selected Scheme2 method. The direct
-database-to-dataset entry point is [prepare_scheme2_dataset.py](../SCHEME2_DATASET.md).
-The alternative [Scheme1 guide](../scheme1/README.md) is retained for historical reproduction.
+Use [`prepare_scheme2_dataset.py`](../SCHEME2_DATASET.md) for the complete checked
+workflow. This package implements raw preparation and frozen-vector export;
+the input encoder lives in `representation_learning/`, and downstream models in
+`train/`.
 
-For normal use, follow the direct entry point above. The module commands below
-expose individual stages; they do not register a completed scheme2_runs workflow
-or run its full export validator. Their outputs can be used with explicit paths
-by the corresponding lower-level modules.
+## Raw preparation
 
-Preprocessing does not train a prediction model. The main command runs the whole
-raw-data preparation path:
-
-```text
-Raw CSV / full-schema SQLite
- -> group by source IP and construct nonoverlapping 100s sequences
- -> aggregate ten 10s buckets, retaining raw categorical histograms
- -> assign/purge original train / validation / test sequences
- -> fit numerical scaling and category vocabularies on real TRAIN only
- -> save the three prepared splits
-```
-
-## 1. Run preprocessing end to end
-
-From the repository root:
+Run exactly one source option from the repository root with a fresh output path:
 
 ```powershell
-.\.venv-cnn\Scripts\python.exe -m CIC_new.preprocessing.run_preprocessing --csv datasets/NF-CICIDS2018-v3.csv --out CIC_new/outputs/preprocessed
+python -m CIC_new.preprocessing.run_preprocessing --db datasets/cic_2018_traffic.db --out CIC_new/outputs/preprocessed
+python -m CIC_new.preprocessing.run_preprocessing --csv datasets/NF-CICIDS2018-v3.csv --out CIC_new/outputs/preprocessed_from_csv
 ```
 
-Alternatively use `--db datasets/cic_2018_traffic.db`, supplying exactly one source.
-The SQLite source must have the full CIC schema; the old reduced-column
-`cic_superposition/.../flows.sqlite` is insufficient. Only NumPy and pandas are
-needed for this command. There is no PyTorch import, CUDA requirement, neural
-network, optimiser or AE training in this stage. No Node/Excel runtime is needed.
+These are alternative SQLite/CSV commands. The SQLite source requires the full
+CIC schema. This stage uses NumPy and pandas without importing PyTorch.
 
-Output:
+`sequence_index.py` constructs source-IP sequences; `bucket_statistics.py`
+aggregates 82 numeric features and raw category histograms into ten buckets.
+`split_policy.py` applies global time blocks, boundary exclusions and attack
+coverage reservations. Vocabularies and numeric scaling are fitted afterward on
+retained real training active buckets. Unknown categories use slot 0; actual
+category code 0 has its own slot. Whole-flow statistics belong to the start bucket
+and represent offline summaries rather than exact within-bucket transmission.
 
-```text
-preprocessed/
-  splits/train/part_*.npz
-  splits/validation/part_*.npz
-  splits/test/part_*.npz
-  schema.json             # category dictionaries and feature definitions
-  scaler.json             # fitted only on retained real training buckets
-  split_notes.json        # assignments, exclusions and family coverage
-  manifest.json           # completion and source metadata
-  manifest.sqlite         # original IDs, sources and provenance
-  raw_originals/          # unfitted bucket statistics/histograms for auditing
-  work.sqlite            # original event cache
-```
+Output contains `splits/{train,validation,test}/part_*.npz`, `schema.json`,
+`scaler.json`, `split_notes.json`, `manifest.json`, `manifest.sqlite`,
+`raw_originals/` and `work.sqlite`. Original shards contain numeric values,
+protocol/L7/service histograms, masks, labels, IDs and flow/attack-flow counts.
+`dataset.py` reads these originals with disposable mmap caching and provides
+training-only donor pools. `donor_plan.py` persists the selected zero-shift plan.
 
-Each prepared shard contains `numeric` (82 statistical features per bucket),
-`hist_protocol`, `hist_l7`, `hist_service`, `mask`, `y_bucket`, `y_sequence`,
-`sample_id`, `flow_counts` and `attack_flow_counts`. These are real originals;
-train/validation/test splitting is complete at this point. A model may use these
-statistics/histograms directly, or use a separately learned representation.
+## Frozen-vector export
 
-## 2. Optional representation learning, outside preprocessing
-
-The professor requested augmentation in an embedding space. If embeddings are
-learned, their weights need a separate fitting step. That is representation
-learning, not part of the raw preprocessing command or a choice of final detector.
-See [representation_learning/README.md](../representation_learning/README.md).
-
-The supplied embedding learner uses a bucket autoencoder as one self-supervised
-method. It is not a requirement that the final model must also be an AE. It learns
-16-dimensional protocol/L7/destination-service lookup vectors and a 64-dimensional
-bucket representation, then freezes that encoder. The frozen representations can
-feed CNN, LSTM, AE or classifier experiments. Other embedding-learning methods
-can be substituted if they export the same frozen-sequence contract.
-
-## 3. Export a fixed augmented dataset, independent of any final model
-
-After separately learning and freezing embeddings and encoding all three splits:
+After [fitting/freeze/encoding](../representation_learning/README.md), the direct
+Scheme2 builder calls `export_augmented_dataset.py` and validates all outputs.
+Prefer that builder to obtain the complete checksummed handoff contract.
+The lower-level exporter is available for individual-stage work:
 
 ```powershell
-.\.venv-cnn\Scripts\python.exe -m CIC_new.preprocessing.export_augmented_dataset --data CIC_new/outputs/preprocessed --encoded CIC_new/outputs/encoded_sequences --out CIC_new/outputs/model_inputs --shift-mode none
+python -m CIC_new.preprocessing.export_augmented_dataset --data <prepared> --encoded <encoded> --out <fresh-export> --shift-mode none --donor-plan <donor_plan.npz>
 ```
 
-This command runs on NumPy, with no model training. It retains all real originals,
-adds P synthetic benign and P synthetic malicious examples to TRAIN, and exports
-real-only validation and test. P is the original malicious training count. Use
-`--originals-only` for an unaugmented export. The current experiment uses
-`--shift-mode none`, as shown above. The low-level exporter defaults to circular
-shifting if this flag is omitted; `--shift-mode circular` is an optional separate
-experiment. Fresh output directories prevent overwriting previous data.
+The selected policy uses zero displacement and a fixed donor plan. The low-level
+exporter also retains optional circular shifts and standalone sampling for
+explicit experiments; those are different configurations. Its historical default
+shift is circular, so pass `--shift-mode none` explicitly. Standalone export alone
+does not run the direct builder's final validator or register a completed workflow.
 
-The direct Scheme2 builder uses the established frozen donor-selection policy.
-The standalone exporter samples its own plan unless `--donor-plan <plan.npz>` is
-provided. Matching the shift mode alone does not guarantee identical donor pairs.
+The first donor is benign; the second is benign or malicious. Both are real train
+originals from different source IPs. Background sampling balances occupancy band
+(1, 2-4, 5-10 active buckets), source, then sequence; malicious sampling balances
+attack family, source, then sequence. Donor reuse is allowed. Only training receives
+P examples per synthetic class. Validation/test retain real natural populations.
 
-```text
-model_inputs/
-  train/part_*.npz         # N real + P synthetic benign + P synthetic malicious
-  validation/part_*.npz    # real originals only
-  test/part_*.npz          # real originals only
-  manifest.json
-  schema.json
-  scaler.json
-  frozen_bucket_encoder.pt
-```
+`augmentation.py` adds frozen bucket vectors, L2-normalizes each sum, propagates
+masks/labels/counts and appends log1p total-flow count scaled with the real training
+scaler. Numerical statistics are not added. Empty positions stay zero; cancellation
+of active vectors does not mark them empty.
 
-Final shard keys:
-
-| Key | Meaning |
+| Final shard key | Meaning |
 |---|---|
-| `X` | float32 `[samples,10,features]`; default 64 vector components + one flow-count channel |
-| `mask` | Active positions; empty positions remain zero in X |
-| `y_sequence`, `y_bucket` | Sequence and bucket targets, separate from X |
-| `sample_id`, `sample_type` | Unique exported ID and real/synthetic class group |
-| `left_id`, `right_id`, `right_shift_buckets` | Donor IDs and circular shift; absent second donor is -1 |
-| `flow_counts` | Flow counts after any rotation/combination |
-| `left_ip`, `right_ip`, `primary_attack` | Audit/visualisation metadata, never model inputs |
+| `X` | float32 `[N,10,65]` with default encoder dimensions |
+| `mask` | Active bucket positions |
+| `y_sequence`, `y_bucket` | Targets separate from inputs |
+| `sample_id`, `sample_type` | Exported identity and real/synthetic group |
+| `left_id`, `right_id`, `right_shift_buckets` | Donor identities and displacement; absent second donor is -1 |
+| `flow_counts` | Combined bucket flow counts |
+| `left_ip`, `right_ip`, `primary_attack` | Audit metadata, never model inputs |
 
-Any model can read exactly these same inputs, including TensorFlow or other
-frameworks without importing PyTorch:
+`flow_metadata.py` exports checksummed real validation/test flow-count sidecars.
+The complete final dataset also includes manifests, schema, scaler, donor plan
+and frozen encoder. Downstream loading, caching and weighting use `train/common/`.
 
-```python
-from CIC_new.preprocessing.export_augmented_dataset import iter_model_shards
-
-for batch in iter_model_shards("CIC_new/outputs/model_inputs", "train"):
-    X, mask, y = batch["X"], batch["mask"], batch["y_sequence"]
-    # Pass to your chosen CNN, LSTM, AE, classifier, etc.
-```
-
-`ModelInputs` in `dataset.py` adds optional mmap caching and balanced batch
-sampling. Batch priors are modelling choices; the exported dataset itself is
-not made 50:50 by deleting real benign examples. The optional AE experiment uses
-four-way balanced training batches. Validation and test must stay unaugmented
-and naturally distributed.
-
-## Augmentation definition
-
-`augmentation.py` supports rotating donor B along its ten time positions, adding
-the two bucket embedding vectors and L2-normalising each resulting vector. The
-current zero-shift configuration adds corresponding bucket positions without
-rotation. When circular shifting is enabled, masks, bucket labels and counts
-follow the same rotation. All flow starts/positions survive;
-there is no raw-record merging, cropping or shift of entire capture days.
-Empty positions are zeroed. Cancellation of active vectors does not mark them empty.
-
-The first donor is benign-only. The second is benign or attack-bearing according
-to the intended synthetic label. Both are retained training originals from
-different source IPs. Backgrounds are sampled by uniform available occupancy
-band (1, 2–4, 5–10), then source, then sequence; positives by family/source/sequence.
-Reuse is allowed. P variants do not mean P new independent attacks or guarantee
-every original attack was selected once. With circular shifting enabled, rotation
-is uniform over 0..9, including zero. It preserves cyclic order but introduces an artificial end/start join;
-rotation alone does not reduce the number of empty buckets.
-
-Numerical feature vectors are not added: means and entropies are not additive.
-A separate log1p total-flow-count channel, using the original-training scaler,
-preserves intensity lost through L2 normalisation. Synthetic vectors are mixtures
-in learned space, not exact physical reconstructed NetFlow records.
-
-## Splits, leakage and practical limits
-
-The existing branch's 15-minute global blocks, approximate 60/20/20 allocation,
-100-second boundary guards and actual-flow-end envelope exclusions are retained.
-All attack types are protected in training; held-out coverage is reserved where
-feasible. Hosts and campaigns can recur across splits, so this is not an
-unseen-host/campaign or zero-day evaluation. No extra calibration fold is added.
-
-Category histograms and bucket statistics are calculated before splitting, but
-vocabularies and numerical scaling are fitted afterward on retained real TRAIN
-only. Unknown categories use slot 0; actual category code 0 is a separate value.
-Whole-flow statistics belong to the start bucket, which is an offline summary,
-not an exact measurement of traffic transmitted within that ten-second interval.
-
-Valid existing V3 prepared data and embedding checkpoints keep their formats and
-can still be used after this code reorganisation. Historical V2 raw-flow mixtures
-and the old 24-feature experiment are different inputs. They are not substitutes.
-
-Allow tens of GB of persistent free disk for full preparation, raw caches,
-histograms, encoded originals and exported/mmap model inputs. Use `df -h` before
-building. No full-corpus runtime or GPU speed claim is established by fixture
-tests. Individual modules require fresh output directories and do not resume
-optimizers. The direct Scheme2 builder separately supports reusing completed
-stages with matching settings via `--resume`; see its guide. Do not run concurrent
-builders against one cache/output.
-
-Tests: `python -m unittest CIC_new.tests.test_embedding_pipeline -v`.
+Allow tens of GB of persistent free disk for full preparation and intermediate
+caches. Use fresh outputs and avoid concurrent builders against the same cache.
+Run the small checks with `python -m unittest discover -s CIC_new/tests -t . -v`.

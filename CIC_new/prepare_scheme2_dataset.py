@@ -1,18 +1,15 @@
-"""Call the teammate's whole-bucket AE + vector addition/L2 data workflow.
+"""Build Scheme2 train/validation/test inputs from the source database.
 
-Builds directly from the database with zero displacement and the established
-donor-selection policy. A rebuilt Scheme1 reference is optional for reproduction.
+Fit a whole-bucket input encoder, freeze it, and export zero-shift vector mixtures.
+This workflow does not train a downstream prediction model.
 """
 import argparse
 from collections import Counter
 from datetime import datetime
 import hashlib
-import itertools
 import json
 import logging
 from pathlib import Path
-import shutil
-import sqlite3
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -27,6 +24,7 @@ from CIC_new.preprocessing.run_preprocessing import prepare
 from CIC_new.preprocessing.export_augmented_dataset import export_dataset
 from CIC_new.preprocessing.augmentation import Encoded
 from CIC_new.preprocessing.dataset import fingerprint
+from CIC_new.preprocessing.donor_plan import make_plan, original_catalog
 from CIC_new.preprocessing.sequence_index import signature, write_json, read_json
 
 
@@ -36,24 +34,6 @@ def digest(path):
         for block in iter(lambda: handle.read(1048576), b""):
             h.update(block)
     return h.hexdigest()
-
-
-def check_same_originals(prepared, reference_prepared):
-    columns = "sequence_id,source_ip,window_start_ms,flows,attack_flows,active_buckets,primary_attack,split,first_ms,max_end_ms"
-    query = f"SELECT {columns} FROM original_sequences ORDER BY sequence_id"
-    a = sqlite3.connect((Path(prepared)/"manifest.sqlite").resolve().as_uri()+"?mode=ro", uri=True)
-    b = sqlite3.connect((Path(reference_prepared)/"manifest.sqlite").resolve().as_uri()+"?mode=ro", uri=True)
-    sentinel = object()
-    count = 0
-    try:
-        for left, right in itertools.zip_longest(a.execute(query), b.execute(query), fillvalue=sentinel):
-            if left != right:
-                raise ValueError("Scheme2 originals/split assignments differ from the reference; use the same DB and seed")
-            count += 1
-    finally:
-        a.close(); b.close()
-    print(f"[paired comparison] {count:,} original identities and split assignments match", flush=True)
-    return count
 
 
 def completed(folder, marker, resume):
@@ -69,18 +49,12 @@ def completed(folder, marker, resume):
     return True
 
 
-def validate_export(dataset, encoded, reference=None, donor_plan=None):
+def validate_export(dataset, encoded, donor_plan=None):
     """Check every output against frozen originals and the shared zero-shift plan."""
     dataset, encoded = map(Path, (dataset, encoded))
     manifest = read_json(dataset/"manifest.json")
-    if reference is not None:
-        reference = Path(reference)
-        ref = read_json(reference/"manifest.json")
-        if manifest["counts"] != ref["counts"] or manifest["total_samples"] != ref["total_samples"]:
-            raise ValueError("Reference and scheme2 dataset budgets differ")
-        donor_plan = reference/"donor_plan.npz"
     if donor_plan is not None and digest(dataset/"donor_plan.npz") != digest(donor_plan):
-        raise ValueError("Export did not preserve the reference donor plan")
+        raise ValueError("Export did not preserve the frozen donor plan")
     with np.load(dataset/"donor_plan.npz", allow_pickle=False) as archive:
         plan = {k: archive[k] for k in archive.files}
     planned_seen = np.zeros(len(plan["sample_id"]), bool)
@@ -103,7 +77,7 @@ def validate_export(dataset, encoded, reference=None, donor_plan=None):
             if a["X"].shape != (n, 10, dimension+1) or a["X"].dtype != np.float32 or not np.isfinite(a["X"]).all():
                 raise ValueError("Invalid exported feature tensor")
             if np.any(a["right_shift_buckets"]):
-                raise ValueError("This paired comparison must have zero displacement")
+                raise ValueError("Scheme2 requires zero displacement")
             synthetic = a["right_id"] >= 0
             if split != "train" and synthetic.any():
                 raise ValueError("Synthetic held-out example")
@@ -170,13 +144,10 @@ def validate_export(dataset, encoded, reference=None, donor_plan=None):
     manifest.update(representation="scheme2", target_ratios=[.6, .2, .2],
         donor_plan_sha256=digest(dataset/"donor_plan.npz"),
         shards=shards, schema_sha256=digest(dataset/"schema.json"), scaler_sha256=digest(dataset/"scaler.json"))
-    if reference is not None:
-        manifest["paired_reference_dataset"] = str(reference.resolve())
     write_json(dataset/"manifest.json", manifest)
     result = dict(passed=True, complete=True, feature_width=manifest["feature_width"], counts=manifest["counts"],
         target_ratios=[.6, .2, .2], P=manifest["P"], all_exported_samples_checked=checked,
-        all_shards_checked=len(shards), identical_reference_originals_and_splits=True if reference is not None else None,
-        identical_reference_donor_plan=True if reference is not None else None, shift_buckets=0, model_accuracy_evaluated=False,
+        all_shards_checked=len(shards), shift_buckets=0, model_accuracy_evaluated=False,
         scope="all exported vectors checked against frozen donors; masks/labels/counts/ownership and original/plan coverage checked; not independent raw-flow reaggregation")
     write_json(dataset/"validation.json", result)
     return result
@@ -188,15 +159,6 @@ def build(args):
     from CIC_new.representation_learning.encode_sequences import encode
 
     source_before = signature(args.db.resolve())
-    reference = args.reference_dataset.resolve() if args.reference_dataset else None
-    if reference is not None:
-        ref_manifest = read_json(reference/"manifest.json")
-        ref_prepared = Path(ref_manifest["prepared_path"])
-        plan = reference/"donor_plan.npz"
-        if not ref_manifest.get("complete") or not plan.is_file() or digest(plan) != ref_manifest["donor_plan_sha256"]:
-            raise ValueError("Complete reference dataset and its unchanged donor plan are required")
-        if source_before != read_json(ref_prepared/"manifest.json")["source"]:
-            raise ValueError("Use the same unchanged database as the scheme1 reference")
     if args.out is None:
         parent = ROOT/"CIC_new/outputs/scheme2_runs"
         parent.mkdir(parents=True, exist_ok=True)
@@ -204,8 +166,6 @@ def build(args):
         args.out = Path(tempfile.mkdtemp(prefix=f"{stamp}_scheme2_bucket{args.bucket_dim}_shift0_seed{args.seed}_", dir=parent))
     out = args.out.resolve()
     settings = {k: str(v.resolve()) if isinstance(v, Path) else v for k, v in vars(args).items() if k != "resume"}
-    if reference is not None:
-        settings["reference_manifest_sha256"] = digest(reference/"manifest.json")
     if out.exists() and any(out.iterdir()):
         if not args.resume or not (out/"workflow.json").is_file():
             raise FileExistsError(f"Fresh output required, or --resume for this completed-stage workflow: {out}")
@@ -226,25 +186,20 @@ def build(args):
         print("[stage 1/5] Real sequences, buckets, 6:2:2 split and train-only transforms", flush=True)
         if args.prepared:
             if not read_json(data/"manifest.json").get("complete") or read_json(data/"manifest.json").get("version") != 3:
-                raise ValueError("--prepared must be completed teammate V3 data, not scheme1 preparation")
+                raise ValueError("--prepared must be completed V3 Scheme2 preparation")
         elif not completed(data, "manifest.json", args.resume):
             prepare(data, db=args.db, seed=args.seed, shard_size=args.shard_size)
         if read_json(data/"manifest.json")["source"] != source_before:
             raise ValueError("Prepared data belongs to another source database")
-        if reference is not None:
-            check_same_originals(data, ref_prepared)
+        # Preserve the established attack/host/activity sampling and seed offset.
+        plan = out/"donor_plan.npz"
+        expected_plan = make_plan(data, original_catalog(data), args.seed+1)
+        if plan.exists():
+            with np.load(plan, allow_pickle=False) as saved:
+                if set(saved.files) != set(expected_plan) or any(not np.array_equal(saved[k], v) for k, v in expected_plan.items()):
+                    raise ValueError("Frozen donor plan differs from deterministic sampling")
         else:
-            # Preserve the original attack/host/activity sampling and seed offset.
-            from CIC_new.scheme1.export import make_plan
-            from CIC_new.scheme1.storage import original_catalog
-            plan = out/"donor_plan.npz"
-            expected_plan = make_plan(data, original_catalog(data), args.seed+1)
-            if plan.exists():
-                with np.load(plan, allow_pickle=False) as saved:
-                    if set(saved.files) != set(expected_plan) or any(not np.array_equal(saved[k], v) for k, v in expected_plan.items()):
-                        raise ValueError("Frozen donor plan differs from deterministic sampling")
-            else:
-                np.savez_compressed(plan, **expected_plan)
+            np.savez_compressed(plan, **expected_plan)
         workflow["stages"]["preprocessed"] = digest(data/"manifest.json")
         write_json(out/"workflow.json", workflow)
         folder = out/"bucket_embeddings"
@@ -280,7 +235,7 @@ def build(args):
             export_dataset(data, encoded, dataset, seed=args.seed, shard_size=args.shard_size,
                            shift_mode="none", donor_plan=plan)
         print("[stage 5/5] Check every exported example against frozen donors", flush=True)
-        report = validate_export(dataset, encoded, reference, donor_plan=plan)
+        report = validate_export(dataset, encoded, donor_plan=plan)
         from CIC_new.preprocessing.flow_metadata import export_flow_metadata
         export_flow_metadata(data, dataset)
         if signature(args.db.resolve()) != source_before:
@@ -301,7 +256,6 @@ def build(args):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--db", type=Path, default=ROOT/"datasets/cic_2018_traffic.db")
-    p.add_argument("--reference-dataset", type=Path, help="Optional rebuilt Scheme1 dataset for historical paired reproduction; not needed for Scheme2")
     p.add_argument("--out", type=Path, help="Fresh workflow directory; default reserves a unique scheme2_runs directory")
     p.add_argument("--prepared", type=Path, help="Optional existing completed V3 preparation")
     p.add_argument("--bucket-checkpoint", type=Path, help="Optional existing whole-bucket checkpoint for that exact V3 preparation")

@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from CIC_new.preprocessing.dataset import Originals, FIELDS, fingerprint
 from .bucket_autoencoder import BucketAE, bucket_loss
-from CIC_new.training_utils import device_for, fresh, dump, config, arguments, validate_arguments
+from .runtime import device_for, fresh, dump, config, arguments, validate_arguments
 
 def bucket_batch(store,positions,device):
     x=torch.from_numpy(np.array(store.arrays["numeric"].reshape(-1,82)[positions],copy=True)).to(device)
@@ -72,4 +72,3 @@ def main():
     args=p.parse_args();validate_arguments(p,args);train_bucket(args)
 
 if __name__=="__main__":main()
-

@@ -1,38 +1,39 @@
-# Scheme2: database to whole-bucket embedding inputs
+# Scheme2 construction protocol
 
-Scheme2 is the selected method. Existing port/category rules and model dimensions
-are unchanged. Run from the repository root only when a new build is needed:
+Run `python -u CIC_new/prepare_scheme2_dataset.py` from the repository root after
+installing `CIC_new/representation_learning/requirements.txt`. The default source
+is `datasets/cic_2018_traffic.db`, table `network_flows`.
 
-```powershell
-.\.venv-cnn\Scripts\python.exe -u CIC_new\prepare_scheme2_dataset.py
-```
+## Construction
 
 1. Construct 100-second source-IP sequences and ten 10-second raw buckets.
 2. Apply the approximate 6:2:2 global time-block split, coverage reservations
    and temporal exclusions. Fit vocabularies/scalers on real training buckets.
 3. Fit the bucket AE on real training active buckets. Validation selects the
    checkpoint. Defaults: protocol/L7/service dimensions 16 each, bucket dimension
-   64, Adam lr 0.001, 5000 updates, batch 512; validation every 200 updates on at
-   most 4096 fixed validation buckets. Test does not fit/select parameters.
-4. Freeze and encode real train/validation/test.
-5. Retain all originals. Generate P benign+attack and P benign+benign training
-   examples with different donor source IPs. Reuse the established attack/host
-   balancing, background activity bands and donor seed offset (+1). Zero shift;
-   add frozen vectors and L2-normalize; append scaled log1p flow count.
+   64, Adam learning rate 0.001, 5000 updates, batch 512; validation every 200
+   updates on at most 4096 fixed validation buckets. Test does not fit/select
+   parameters. This is an input encoder, not the downstream detector.
+4. Freeze the encoder and encode real train/validation/test originals.
+5. Retain all originals. Add P benign+attack and P benign+benign training
+   examples, where P is the real malicious training count. Donors must have
+   different source IPs. Preserve attack/host balancing, background activity
+   bands and donor seed offset (+1). Add corresponding frozen vectors with
+   zero displacement, apply L2 normalization, and append scaled log1p flow count.
 6. Check every exported vector/count/mask/label, donor ownership, plan, original
-   coverage and shard checksum. Save compact checksummed real validation/test
-   flow-count sidecars for evaluation without another representation's data.
+   coverage and shard checksum. Save checksummed real validation/test flow-count
+   sidecars for later evaluation.
 
-No Scheme1 output is required. The donor sampler is shared source code retained
-in scheme1/; it does not train or read a Scheme1 representation. The original
-completed Scheme2 dataset still contains historical paired-reference paths in
-its frozen manifest; these record provenance and are no longer runtime inputs.
+The donor policy lives in `preprocessing/donor_plan.py`. No historical method is
+required. Donors may be reused; P synthetic examples are not P new independent
+attacks, and sampling does not guarantee every original attack is selected once.
+Synthetic mixtures exist in learned vector space, not as reconstructed raw flows.
 
-Each build creates a unique
-outputs/scheme2_runs/<timestamp>_scheme2_bucket64_shift0_seed4266_<suffix>/,
-containing workflow.json, preprocessed/, bucket_embeddings/, encoded_sequences/,
-donor_plan.npz and dataset/. Final input shape is [N,10,65]: 64 embedding
-coordinates and one intensity channel. Downstream --dataset points to dataset/.
+The final shape is `[N, 10, 65]`: 64 embedding coordinates and one intensity
+channel. Empty buckets stay zero and have mask 0. Labels, attack names and source
+identities remain separate audit metadata and never enter model inputs.
+
+## Completed dataset population
 
 | Split | Real benign | Real malicious | Synthetic benign | Synthetic malicious |
 |---|---:|---:|---:|---:|
@@ -40,20 +41,41 @@ coordinates and one intensity channel. Downstream --dataset points to dataset/.
 | Validation | 250229 | 917 | 0 | 0 |
 | Test | 262274 | 851 | 0 | 0 |
 
-These counts describe the completed source/seed, not every possible input.
-Completion requires workflow status=complete and dataset validation passed=true.
-Construction checks do not establish detection accuracy.
+These counts describe the existing completed source/seed, not every input.
+Completion requires `workflow.json` status `complete` and final
+`dataset/validation.json` with `passed=true`. Construction checks do not establish
+detection accuracy. Existing manifests may contain historical absolute reference
+paths; preserve them as provenance. Downstream training does not dereference them.
+
+## Outputs and stage reuse
+
+Each default build reserves a unique directory under `CIC_new/outputs/scheme2_runs/`.
+It contains `workflow.json`, `preprocessed/`, `bucket_embeddings/`,
+`encoded_sequences/`, `donor_plan.npz` and final `dataset/`. Preserve completed
+data and checkpoints. Supply a fresh `--out` for intentional new builds:
 
 ```powershell
-python CIC_new\prepare_scheme2_dataset.py --out CIC_new\outputs\scheme2_new_run
-python CIC_new\prepare_scheme2_dataset.py --out CIC_new\outputs\scheme2_new_run --resume
-python CIC_new\prepare_scheme2_dataset.py --prepared <completed-v3-directory> --bucket-checkpoint <bucket-best.pt>
+python CIC_new/prepare_scheme2_dataset.py --out CIC_new/outputs/scheme2_new_run
+python CIC_new/prepare_scheme2_dataset.py --out CIC_new/outputs/scheme2_new_run --resume
+python CIC_new/prepare_scheme2_dataset.py --prepared <completed-v3-directory> --bucket-checkpoint <bucket-best.pt>
 ```
 
-Resume reuses completed stages with identical recorded settings, not partial
-optimizer state. External checkpoints must match the exact preparation and
-supplied dimensions. Defaults resolve the SQLite source at
-datasets/cic_2018_traffic.db. Optional --reference-dataset <rebuilt-scheme1-dataset>
-restores historical paired checking; it is unnecessary for normal use.
+The second command reuses completed stages from the first with identical settings;
+it does not resume a partial optimizer. The third builds a fresh export from
+matching existing preparation and encoder artifacts. External checkpoints must
+match the exact preparation and requested dimensions. Historical workflows made
+with retired comparison flags should be consumed as completed data; use a fresh
+build for the current command. The old `--reference-dataset` flag is retired.
 
-Follow with [Scheme2 training/evaluation](SCHEME2_EXPERIMENT.md).
+Copy the complete final `dataset/` directory to `datasets/dataset/`, or provide
+its path through the downstream `--dataset` option. Follow
+[`train/README.md`](../train/README.md) for model training and evaluation.
+
+## Evaluation scope
+
+The split uses global 15-minute blocks, approximately 60/20/20 allocation,
+100-second guards and actual-flow-end exclusions. Train coverage is protected;
+held-out attack coverage is reserved where feasible. Hosts/campaigns can recur
+across splits. Historical work has already inspected this test split; it is not
+a newly untouched holdout. Training-derived diagnostics and synthetic fixtures
+must be reported separately from real held-out validation/test results.

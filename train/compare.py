@@ -25,6 +25,9 @@ def compare(paths, output=None, allow_partial=False):
                 "evaluation_policy", "weighting", "seed"):
         if len({s[key] for s in summaries}) != 1:
             raise ValueError(f"Incompatible comparison: {key}")
+    transform = summaries[0].get("input_transform", {"name": "identity"})
+    if any(s.get("input_transform", {"name": "identity"}) != transform for s in summaries):
+        raise ValueError("Incompatible comparison: input_transform; use a separate temporal ablation table")
     rows = []
     for path, summary in zip(paths, summaries):
         metrics = summary["metrics"]

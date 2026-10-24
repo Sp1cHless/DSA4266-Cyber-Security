@@ -1,58 +1,57 @@
-# Network traffic time-series project
+# Scheme2 network traffic classification
 
-**Scheme2 is the selected CIC-IDS2018 superimposition method.** It freezes learned
-whole-bucket embeddings, adds donor vectors, applies L2 normalization and retains
-a separate flow-count channel. The current configuration uses 16-dimensional
-tables for protocol, L7 and destination-service categories, 64-dimensional bucket vectors, 65 final input
-features, zero displacement and the approximate 6:2:2 time-block split.
+This branch contains the Scheme2 data construction workflow and the downstream
+models in `train/`. Scheme2 converts CIC-IDS2018 flows into frozen bucket vectors,
+adds zero-shift training donor vectors, applies L2 normalization, and appends a
+separate flow-count channel. Default final input shape: `[N, 10, 65]`.
 
-**Scheme2 has completed one full temporal-AE training run, validation and a real
-held-out test evaluation.** The run was conducted during method comparison and
-serves as the current Scheme2 experimental baseline for reporting and subsequent
-work. Test ROC-AUC was 0.84948 and average precision was 14.93%, using a frozen
-AE and a linear readout fitted on real training data. See
-[the completed run and results](CIC_new/SCHEME2_EXPERIMENT.md) for metrics,
-artifact locations and evaluation scope.
+| Path | Purpose |
+|---|---|
+| `CIC_new/prepare_scheme2_dataset.py` | One entry point from source database to checked train/validation/test inputs |
+| `CIC_new/preprocessing/` | Sequence construction, bucket statistics, temporal split, scaling, donor plans, export and metadata |
+| `CIC_new/representation_learning/` | Fit the input bucket encoder, then freeze and encode originals |
+| `CIC_new/tests/` | Small data-construction checks using artificial fixtures |
+| `datasets/` | Local source database and delivered final dataset; see its README |
+| `train/` | Current model training, comparison, evaluation and diagnostics |
 
-For a fresh checkout, create an environment from the repository root in a Windows
-VS Code terminal. Skip creation if you already have a suitable environment:
+## Use an existing dataset
+
+Place the complete delivered final dataset under `datasets/dataset/`. Keep its
+manifests, donor plan, frozen encoder, metadata sidecars and all three shard folders.
+Install `train/requirements.txt`, then follow [the training guide](train/README.md).
+Training reads the delivered dataset directly; no data rebuild is required.
+
+## Build a new dataset
+
+Run from the repository root. An existing Python environment can also be used.
 
 ```powershell
 python -m venv .venv-cnn
-.\.venv-cnn\Scripts\python.exe -m pip install -r CIC_new\preprocessing\requirements.txt
-.\.venv-cnn\Scripts\python.exe -m pip install torch
+.\.venv-cnn\Scripts\python.exe -m pip install -r CIC_new/representation_learning/requirements.txt
+.\.venv-cnn\Scripts\python.exe -u CIC_new/prepare_scheme2_dataset.py
 ```
 
-The environment, source data and completed outputs are not included in Git.
-Obtain the team's full-schema `cic_2018_traffic.db` and place it in `datasets/`;
-the default source table is `network_flows`. For another database location, pass
-`--db <path>`. The [preprocessing guide](CIC_new/preprocessing/README.md) also
-documents CSV input through the individual stage commands.
+The default source is `datasets/cic_2018_traffic.db`, table `network_flows`.
+Use `--db <path>` for another full-schema SQLite source. The builder reserves a
+unique directory under `CIC_new/outputs/scheme2_runs/` and prints its final
+`dataset/` path. Pass that path to training with `--dataset <path>` or copy the
+complete final directory to `datasets/dataset/`.
 
-Run the active workflow from the repository root:
+See [the data workflow](CIC_new/README.md) and
+[the construction protocol](CIC_new/SCHEME2_DATASET.md) for stage and split details.
+The bucket encoder is an input transform; downstream detector training belongs
+to `train/`.
 
-```powershell
-# Build a NEW dataset only when regeneration is needed.
-.\.venv-cnn\Scripts\python.exe -u CIC_new\prepare_scheme2_dataset.py
-# Check the latest completed dataset without training.
-.\.venv-cnn\Scripts\python.exe CIC_new\run_scheme2_experiment.py --stage check
-# Train a NEW AE run, then evaluate its frozen checkpoint on validation.
-.\.venv-cnn\Scripts\python.exe -u CIC_new\run_scheme2_experiment.py
-```
+## Repository scope
 
-On the experiment machine, completed Scheme2 data and models are under
-`CIC_new/outputs/`. Other members must obtain the completed dataset separately or
-build it from the source; cloning the repository does not download these files.
-When using a shared dataset, pass `--dataset <dataset-directory>` explicitly to
-the check/training command. Copy the entire final `dataset/` directory, including
-its manifests, donor plan, metadata sidecars and train/validation/test shards.
-New builds, training runs and evaluations use separate identifiable directories.
-See [CIC_new/README.md](CIC_new/README.md) for the directory map and stage commands.
-Scheme1 is retained as source for historical reproduction. Shared conclusions
-and test reports are in
-[the comparison archive](CIC_new/reports/superimposition_comparison_20261022/SUMMARY.md).
-Full evidence, configurations, histories and cleanup audits remain in the ignored
-local portion of that archive. Ignore rules are centralized in the root .gitignore.
-Historical EDA and unrelated UNSW/temporal experiments remain in their existing
-folders. Raw datasets, virtual environments and generated outputs are local and
-ignored by Git. Project files are written in English.
+Scheme1, old temporal-AE trainers/evaluators, exploratory analyses, unrelated
+dataset workflows, old reports and historical experiments are stored locally
+under `_local_archive/`. That directory is ignored by Git. Its dated cleanup
+directory includes a move ledger and original copies of edited files.
+Source data, completed datasets, checkpoints and generated model results remain
+local. Existing completed results are preserved; new builds require fresh outputs.
+
+The same historical Scheme2 test split has already been inspected in project work.
+It is not a newly untouched holdout. Synthetic training examples reuse real
+training donors and are not independent observations. Fixture checks verify
+implementation behavior, not detection performance. Project files use English.

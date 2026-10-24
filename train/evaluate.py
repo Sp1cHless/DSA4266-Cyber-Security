@@ -42,6 +42,7 @@ def main(argv=None):
     out = fresh(args.out or run / "evaluations" / unique_name(args.split))
     # Record the evaluation plan before any selected split arrays are opened.
     write_json(out / "plan.json", {"run": str(run), "split": args.split, "thresholds": thresholds,
+                                   "input_transform": config.get("input_transform", {"name": "identity"}),
                                    "model_sha256": summary["model_sha256"], "refitting": False,
                                    "historical_test_previously_inspected": True})
     opened = []
@@ -53,10 +54,15 @@ def main(argv=None):
         scores = score(name, model, split, device, args.threads)
         seconds = time.perf_counter() - started
         report = export_evaluation(out, split, scores, thresholds)
+        scope = "Frozen evaluation on the existing split; not a fresh untouched final holdout."
+        if config.get("input_transform", {}).get("name") == "circular_shift":
+            scope = ("Temporal perturbation diagnostic under the saved circular shift on the existing split; "
+                     "not chronological-input performance or a fresh untouched final holdout.")
         write_json(out / "summary.json", {"complete": True, "split": args.split, "model": name,
                    "metrics": report, "prediction_seconds": seconds, "device": device, "refitting": False,
+                   "input_transform": config.get("input_transform", {"name": "identity"}),
                    "threshold_source": "saved_real_validation_thresholds", "test_used": args.split == "test",
-                   "scope": "Frozen evaluation on the existing split; not a fresh untouched final holdout."})
+                   "scope": scope})
         write_json(out / "status.json", {"status": "complete"})
         print(f"Frozen {args.split}: AP={report['average_precision']:.6f}; {out}", flush=True)
         return out

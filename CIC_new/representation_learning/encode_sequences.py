@@ -7,7 +7,7 @@ import torch
 from torch.nn import functional as F
 from CIC_new.preprocessing.dataset import Originals, FIELDS, fingerprint
 from .bucket_autoencoder import BucketAE
-from CIC_new.training_utils import device_for, fresh, dump, config, arguments, validate_arguments
+from .runtime import device_for, fresh, dump, config, arguments, validate_arguments
 
 @torch.no_grad()
 def encode(args):
@@ -53,4 +53,3 @@ def main():
     args=p.parse_args();validate_arguments(p,args);encode(args)
 
 if __name__=="__main__":main()
-

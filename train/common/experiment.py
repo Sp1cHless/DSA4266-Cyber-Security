@@ -80,9 +80,27 @@ def main(name, argv=None):
     else:
         parser.add_argument("--epochs", type=int)
         parser.add_argument("--batch-size", type=int)
+    if name == "lstm":
+        parser.add_argument("--circular-shift-start", type=int, choices=range(10),
+                            help="Original zero-based bucket to move to the front on every split; 0 keeps chronological order")
     args = parser.parse_args(argv)
     validate_arguments(args)
     config = read_json(args.config)
+    input_transform = {"name": "identity"}
+    if name == "lstm":
+        start = args.circular_shift_start
+        if start is None:
+            start = config["architecture"].get("circular_shift_start", 0)
+        if type(start) is not int or not 0 <= start < 10:
+            raise ValueError("circular_shift_start must be an integer from 0 to 9")
+        # Preserve the original baseline checkpoint/config format when start is zero.
+        if start or "circular_shift_start" in config["architecture"]:
+            config["architecture"]["circular_shift_start"] = start
+        if start:
+            input_transform = {"name": "circular_shift", "start_bucket": start,
+                               "bucket_order": list(range(start, 10)) + list(range(start)),
+                               "features_and_mask_together": True,
+                               "applies_to": "train_validation_and_frozen_evaluation"}
     for key in ("patience", "epochs", "rounds", "batch_size"):
         value = getattr(args, key, None)
         if value is not None:
@@ -91,11 +109,14 @@ def main(name, argv=None):
         raise ValueError("All training settings must be positive")
     device = resolve_device(name, args.device)
     data = Scheme2(args.dataset, args.cache)
-    out = fresh(args.out or ROOT / name / "runs" / unique_name(f"{name}_seed{args.seed}"))
+    label = f"{name}_seed{args.seed}"
+    if input_transform["name"] == "circular_shift":
+        label += f"_circular_start{input_transform['start_bucket']}"
+    out = fresh(args.out or ROOT / name / "runs" / unique_name(label))
     config.update({"model": name, "seed": args.seed, "device": device, "threads": args.threads,
                    "dataset": str(data.path), "dataset_manifest_sha256": data.identity,
                    "evaluation_policy": POLICY, "weighting": "equal_four_groups_mean_weight_one",
-                   "selection_metric": "validation_average_precision_sklearn",
+                   "selection_metric": "validation_average_precision_sklearn", "input_transform": input_transform,
                    "test_used": False, "environment": environment()})
     source_paths = sorted([p for p in ROOT.rglob("*.py") if not any(
         v in p.relative_to(ROOT).parts for v in ("runs", "cache", "__pycache__", "tests"))])
@@ -111,6 +132,7 @@ def main(name, argv=None):
         weights = training_weights(training)
         write_json(out / "data_audit.json", {"dataset_manifest_sha256": data.identity,
                    "train": training.info, "validation": validation.info, "test_opened": False,
+                   "input_transform": input_transform,
                    "train_group_weight_totals": {g: float(weights[training["types"] == g].sum(dtype=np.float64))
                                                  for g in training.info["groups"]}})
         engine = adapter(name)
@@ -133,6 +155,7 @@ def main(name, argv=None):
                    "dataset_manifest_sha256": data.identity, "train_cohort_sha256": training.info["cohort_sha256"],
                    "validation_cohort_sha256": validation.info["cohort_sha256"],
                    "evaluation_policy": POLICY, "weighting": config["weighting"], "device": device,
+                   "input_transform": input_transform,
                    "environment": config["environment"],
                    "fit": fit_info, "fit_seconds": fit_seconds, "validation_prediction_seconds": prediction_seconds,
                    "validation_sequences_per_second": len(validation) / max(prediction_seconds, 1e-9),
@@ -143,6 +166,11 @@ def main(name, argv=None):
                        "This is one supervised training seed, not the earlier AE plus linear readout.",
                        "Historical Scheme2 work already inspected this dataset's test split.",
                        "The original split does not guarantee unseen hosts or campaigns."]}
+        if input_transform["name"] == "circular_shift":
+            summary["limitations"] += [
+                "Temporal perturbation diagnostic on real validation; not chronological-input performance or a final test result.",
+                "The original training cohort is reused once per epoch under a fixed rotation; no new independent data are created.",
+                "A circular shift changes the start/end boundary while retaining most adjacent pairs; it does not isolate all temporal-order effects."]
         write_json(out / "summary.json", summary)
         write_json(out / "status.json", {"status": "complete", "test_used": False})
         print(f"Completed {name}: validation AP={metrics['average_precision']:.6f}; {out}", flush=True)

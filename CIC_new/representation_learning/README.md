@@ -1,65 +1,45 @@
-# Learn reusable input embeddings
+# Scheme2 input representation
 
-This is the selected Scheme2 whole-bucket learner. Retired Scheme1 independently learns
-only L7/source-port/destination-port tables using `CIC_new/train_embeddings.py`;
-see [its guide](../scheme1/README.md). No teammate checkpoint is needed for scheme1.
+This stage fits an input encoder after preprocessing has assigned the original
+train/validation/test splits. The complete checked entry point is
+[`prepare_scheme2_dataset.py`](../SCHEME2_DATASET.md). Downstream prediction-model
+training belongs to `train/`.
 
-This stage fits an input representation after raw preprocessing has already
-created train/validation/test. It does not select or train the final detector.
+The bucket autoencoder reconstructs scaled numeric statistics with MSE and
+category distributions with soft-target cross-entropy. Default protocol, L7 and
+destination-service tables have 16 dimensions each; the whole-bucket vector has
+64 dimensions and is trained as a unit vector. Service groups destination ports
+into DNS, web, SSH, FTP, mail, RDP, SMB and other. Numeric features retain port
+diversity statistics. UNK vectors stay zero.
 
-Learned categorical embeddings require weight fitting. The current method uses
-a **bucket autoencoder** to reconstruct scaled numerical statistics (MSE) and
-category distributions (soft-target cross-entropy). This prevents the learned
-representation from becoming an arbitrary category-ID sum. The bucket representation
-is trained as a unit vector, so exporting unit vectors does not discard information
-encoded only in magnitude. The method is an implementation choice; the professor
-did not require a bucket AE or a final temporal AE.
+Only real training active buckets fit weights. A fixed real validation subset
+selects the checkpoint. Test does not fit or select any parameters. The bucket
+encoder is frozen before superimposition so downstream training cannot move its
+own input representation.
 
-## Learn embeddings using real training buckets
+## Individual stages
 
-```bash
-python -u -m CIC_new.representation_learning.learn_bucket_embeddings \
-  --data CIC_new/outputs/preprocessed \
-  --out CIC_new/outputs/bucket_embeddings \
-  --device cuda --steps 5000 --batch-size 512
+From the repository root, with new output directories:
+
+```powershell
+python -u -m CIC_new.representation_learning.learn_bucket_embeddings --data <prepared> --out <fresh-bucket-embeddings> --device cpu --steps 5000 --batch-size 512
+python -u -m CIC_new.representation_learning.encode_sequences --data <prepared> --checkpoint <bucket-embeddings>/best.pt --out <fresh-encoded-sequences> --device cpu --splits train validation test
 ```
 
-For a plumbing check use `--steps 20 --validate-every 10 --val-limit 128`.
-Defaults are 16 dimensions per categorical field and 64 per combined bucket.
-The fields are protocol, L7 and service. Service is a destination-port grouping
-(DNS, web, SSH, FTP, mail, RDP, SMB and other), not an embedding of every raw port
-number. Source/destination-port diversity statistics remain in the numeric input.
-Vocabularies/scaling already come from preprocessing; only real training buckets
-fit the weights, and real validation buckets select the checkpoint. UNK's vector
-is fixed at zero. Test does not select weights or hyperparameters.
+CUDA can be selected on a supported machine. The direct builder defaults to
+automatic CUDA/CPU selection. For a small artificial plumbing check, use a tiny
+fixture rather than fitting a full source database.
 
-The network lives in `bucket_autoencoder.py`. Its optimisation loop lives in
-`learn_bucket_embeddings.py`, clearly outside preprocessing. Once trained, the
-encoder is frozen to keep later augmentation inputs/targets stable. Optimising
-a downstream reconstruction model must not collapse or move its own input targets.
+`bucket_autoencoder.py` defines the input encoder; `learn_bucket_embeddings.py`
+fits it; `encode_sequences.py` applies the frozen checkpoint; `runtime.py`
+provides their argument, device, output and seed helpers.
 
-## Encode original sequences without further training
+Encoding runs without optimizer updates. Include all three splits explicitly;
+the low-level encoding command otherwise defaults to train/validation only.
+Outputs are disk-backed embeddings, masks, labels, counts and original metadata.
+Manifests record checkpoint/preparation fingerprints; schema, scaler and encoder
+are copied for provenance. Raw numeric/histogram arrays use mmap caches to avoid
+repeated NPZ decompression. Keep these artifacts on persistent storage.
 
-```bash
-python -u -m CIC_new.representation_learning.encode_sequences \
-  --data CIC_new/outputs/preprocessed \
-  --checkpoint CIC_new/outputs/bucket_embeddings/best.pt \
-  --out CIC_new/outputs/encoded_sequences \
-  --device cuda --splits train validation test
-```
-
-This is frozen inference: no optimiser or gradient updates run. All three folds
-use the same encoder. The default without `--splits` encodes train/validation only;
-include test explicitly when exporting the final three-fold dataset. Test encoding
-is application of an already selected transform, not fitting on test.
-
-Output per split is disk-backed bucket embeddings, masks, labels, counts and
-original metadata. The manifest records checkpoint and preparation fingerprints.
-The encoder and schema/scaler are copied for reproducibility. Numerical and histogram
-source arrays are cached as mmap files, with NPZ decompression performed once.
-
-Next run [export_augmented_dataset](../preprocessing/README.md) to produce fixed
-model-independent training/validation/test arrays. Any final architecture may use
-them. Existing Torch checkpoints remain state-dict compatible after the file moves.
-Keep code, caches and checkpoints under persistent storage; full-data cache disk
-requirements and GPU throughput must be measured on the target machine.
+Continue with the direct builder's frozen-vector export and full validation.
+See [the preprocessing guide](../preprocessing/README.md) for the final schema.

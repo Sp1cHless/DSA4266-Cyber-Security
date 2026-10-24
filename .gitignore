@@ -7,32 +7,20 @@ __pycache__/
 node_modules/
 ~$*
 
-# Large local datasets and generated SQLite databases
-datasets/NF-UNSW-NB15-v3.csv
-datasets/NF-CICIDS2018-v3.csv
-datasets/f78acbaa2afe1595_NFV3DATA-A11964_A11964/
-datasets/*.db
-datasets/*.db-*
-datasets/.DS_Store
-/datasets/dataset/
+# Retired workflows, historical experiments, and cleanup recovery records.
+/_local_archive/
 
-# Shared Scheme2 model screening data caches and unique experiment outputs.
+# Local source data and the delivered Scheme2 dataset.
+/datasets/*
+!/datasets/README.md
+!/datasets/NetFlow_v3_Features.csv
+
+# Reproducible Scheme2 construction outputs and representation checkpoints.
+/CIC_new/outputs/
+
+# Downstream model caches, runs, comparisons, and fixture artifacts.
 /train/cache/
 /train/runs/
 /train/*/runs/
+/train/comparisons/
 /train/tests/artifacts/
-
-# Reproducible generated data and experiment artifacts
-processed_binary_temporal*/
-experiments/
-
-# CIC generated outputs at every workflow depth stay local.
-/CIC_new/**/outputs/
-/CIC_new/maintenance/
-
-# Full comparison evidence, runtime snapshots and machine-specific cleanup audits
-# remain in the local archive. Share only the curated conclusions and test results.
-/CIC_new/reports/superimposition_comparison_20261022/*
-!/CIC_new/reports/superimposition_comparison_20261022/SUMMARY.md
-!/CIC_new/reports/superimposition_comparison_20261022/TEST_RESULTS.md
-!/CIC_new/reports/superimposition_comparison_20261022/test_metrics.json
