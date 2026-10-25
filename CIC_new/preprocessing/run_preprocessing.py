@@ -171,26 +171,30 @@ def import_csv(source,target,chunksize=250000):
     finally:conn.close()
 
 
-def prepare(out,db=None,csv=None,seed=4266,shard_size=2048):
+def prepare(out,db=None,csv=None,seed=4266,shard_size=2048,holdout=()):
     out=Path(out).resolve()
     if bool(db)==bool(csv):raise ValueError("Supply exactly one full-schema --db or --csv")
     if out.exists() and any(out.iterdir()):raise FileExistsError(out)
+    holdout=tuple(sorted({str(name).strip() for name in holdout if str(name).strip()}))
     out.mkdir(parents=True,exist_ok=True)
     supplied=Path(db or csv).resolve();signature=sequence_index.signature(supplied)
     manifest=dict(version=3,complete=False,seed=seed,source=signature,
                   order=["sequence_construction","bucket_aggregation","split","training_only_fitting","embedding_space_training_augmentation"],
-                  categorical_fields=list(FIELDS),model_training_started=False)
+                  categorical_fields=list(FIELDS),model_training_started=False,
+                  train_holdout_attacks=list(holdout))
     sequence_index.write_json(out/"manifest.json",manifest)
     if csv:
         db=out/"raw_source.sqlite";import_csv(Path(csv),db)
     else:db=Path(db).resolve()
     sequence_index.index_source(out,db)
     aggregate_originals(out,shard_size)
-    sequence_index.split_originals(out,seed)
+    sequence_index.split_originals(out,seed,holdout)
     counts=fit_and_export(out)
     if signature!=sequence_index.signature(supplied):raise AssertionError("Source changed")
     manifest.update(complete=True,counts=counts,
                     split_policy="global 15min blocks; 100s guards and actual-end envelope exclusions",
+                    train_holdout_policy=("declared primary attack labels removed from the training fold only; validation/test retained; "
+                                          "fold assignment, reservations and purge identical to a run without a holdout" if holdout else None),
                     augmentation_materialized=False)
     sequence_index.write_json(out/"manifest.json",manifest)
     print(json.dumps(manifest,indent=2),flush=True)
@@ -203,6 +207,7 @@ if __name__=="__main__":
     p.add_argument("--out",type=Path,required=True)
     p.add_argument("--seed",type=int,default=4266)
     p.add_argument("--shard-size",type=int,default=2048)
+    p.add_argument("--holdout-train-attacks",default="",help="Comma-separated primary attack labels removed from the training fold only")
     args=p.parse_args()
     if args.shard_size<1:p.error("Positive shard size required")
-    prepare(args.out,args.db,args.csv,args.seed,args.shard_size)
+    prepare(args.out,args.db,args.csv,args.seed,args.shard_size,args.holdout_train_attacks.split(","))

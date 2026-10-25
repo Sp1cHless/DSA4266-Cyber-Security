@@ -111,17 +111,19 @@ def index_source(out, db):
         conn.close()
 
 
-def split_originals(out, seed):
+def split_originals(out, seed, holdout=()):
     conn = connect(out)
     try:
         n = conn.execute("SELECT COUNT(*) FROM original_sequences").fetchone()[0]
         data = {k: np.empty(n, np.int64) for k in ("ids", "start", "first", "end", "source", "attacks")}
+        primary = np.empty(n, dtype="U96")
         sources = {}
-        for i, (sid, start, first, end, source, attacks) in enumerate(conn.execute(
-                "SELECT sequence_id,window_start_ms,first_ms,max_end_ms,source_ip,attack_flows FROM original_sequences ORDER BY sequence_id")):
+        for i, (sid, start, first, end, source, attacks, attack) in enumerate(conn.execute(
+                "SELECT sequence_id,window_start_ms,first_ms,max_end_ms,source_ip,attack_flows,primary_attack FROM original_sequences ORDER BY sequence_id")):
             source_id = sources.setdefault(source, len(sources))
             for key, value in zip(data, (sid, start, first, end, source_id, attacks)):
                 data[key][i] = value
+            primary[i] = attack
         cells = {}
         for sid, attack, count in conn.execute("SELECT sequence_id,attack,flows FROM sequence_attacks ORDER BY sequence_id,attack"):
             index = int(np.searchsorted(data["ids"], sid))
@@ -129,7 +131,8 @@ def split_originals(out, seed):
                 raise AssertionError("Attack membership has no original sequence")
             cells[(index, attack)] = count
         kept, original, reasons, blocks, assigned, reserved, notes = sp.split(
-            data["start"], data["first"], data["end"], data["source"], data["attacks"], cells, seed)
+            data["start"], data["first"], data["end"], data["source"], data["attacks"], cells, seed,
+            primary=primary, holdout_types=holdout)
         conn.executemany("UPDATE original_sequences SET split=?,assigned_split=?,exclusion_reason=? WHERE sequence_id=?",
                          ((sp.NAMES[int(kept[i])], sp.NAMES[int(original[i])], int(reasons[i]), int(sid)) for i,sid in enumerate(data["ids"])))
         conn.execute("DROP TABLE IF EXISTS split_groups")
@@ -145,6 +148,19 @@ def split_originals(out, seed):
             counts = conn.execute('''SELECT COUNT(*),COALESCE(SUM(attack_flows>0),0),COALESCE(SUM(flows),0),
                 COALESCE(SUM(attack_flows),0),COUNT(DISTINCT source_ip) FROM original_sequences WHERE split=?''',(name,)).fetchone()
             notes["original_composition"].append(dict(zip(("split","sequences","positive_sequences","flows","attack_flows","sources"),(name,*counts))))
+        if holdout:
+            residual = []
+            for name in holdout:
+                retained = conn.execute("SELECT COUNT(*) FROM original_sequences WHERE split='train' AND primary_attack=?",(name,)).fetchone()[0]
+                if retained:
+                    raise AssertionError(f"Holdout attack label retained as a training primary label: {name}")
+                sequences, flows = conn.execute('''SELECT COUNT(*),COALESCE(SUM(a.flows),0) FROM sequence_attacks a
+                    JOIN original_sequences s ON s.sequence_id=a.sequence_id
+                    WHERE a.attack=? AND s.split='train' AND s.primary_attack<>?''',(name,name)).fetchone()
+                residual.append({"attack_type": name, "train_sequences_not_primary": sequences,
+                                 "train_flows_not_primary": flows,
+                                 "scope": "flows of this label inside retained training sequences whose primary label is another attack or Benign"})
+            notes["train_holdout_residual"] = residual
         if conn.execute("SELECT COUNT(*) FROM original_sequences WHERE split IS NULL").fetchone()[0]:
             raise AssertionError("Unassigned original sequence")
         conn.execute("CREATE INDEX IF NOT EXISTS original_split ON original_sequences(split)")

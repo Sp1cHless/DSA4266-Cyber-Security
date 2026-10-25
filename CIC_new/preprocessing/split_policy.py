@@ -53,7 +53,7 @@ def exclude_boundaries(start, first, max_end, codes, embargo_ms=EMBARGO_MS):
     return retained, reasons, boundaries
 
 
-def split(start, first, max_end, source, attack_flows, cells, seed=4266):
+def split(start, first, max_end, source, attack_flows, cells, seed=4266, primary=None, holdout_types=()):
     """Return kept/original fold codes, exclusion bits, groups and audit metadata.
 
     cells maps (zero-based sequence array index, attack name) to exact type count.
@@ -61,10 +61,22 @@ def split(start, first, max_end, source, attack_flows, cells, seed=4266):
     The footprint also includes the preceding observed time group, so a first
     observed window after a capture gap is not accidentally purged on entry.
     Greedy reservations are feasible coverage, not a global optimality claim.
+
+    holdout_types lists attack labels removed from the training fold only, by
+    primary sequence label. Fold assignment, coverage reservations, the seeded
+    RNG and the temporal purge run exactly as without a holdout, so validation
+    and test populations are unchanged; only training membership is reduced.
     """
     n = len(start)
     if not n or not all(len(a) == n for a in (first, max_end, source, attack_flows)):
         raise ValueError("Split input arrays are empty or have inconsistent lengths")
+    holdout_types = tuple(sorted(set(holdout_types)))
+    if primary is not None:
+        primary = np.asarray(primary)
+        if len(primary) != n:
+            raise ValueError("Primary attack labels have a different length")
+    elif holdout_types:
+        raise ValueError("Training holdout requires one primary attack label per sequence")
     blocks, group_index, weights = np.unique(start//BLOCK_MS, return_inverse=True, return_counts=True)
     if len(blocks) < 3:
         raise ValueError("Need at least three observed global 15min blocks for train/validation/test")
@@ -170,7 +182,33 @@ def split(start, first, max_end, source, attack_flows, cells, seed=4266):
         corrected = ratios/np.maximum(rates, .01)
         target = corrected/corrected.sum()*n
     _, original, kept, reasons, boundaries, assigned = best
+    held = np.zeros(n, bool)
+    removed_total = 0
+    train_holdout = []
+    if holdout_types:
+        held = np.isin(primary, holdout_types)
+        missing_types = sorted(set(holdout_types)-set(np.unique(primary).tolist()))
+        if missing_types:
+            raise ValueError(f"Holdout attack types absent from the source: {missing_types}")
+        for name in holdout_types:
+            indices = np.array([i for i,_ in by_type.get(name, [])], np.int64)
+            counts = np.array([c for _,c in by_type.get(name, [])], np.int64)
+            primary_here = held[indices]
+            dropped = (kept[indices] == 0) & primary_here
+            train_holdout.append({"attack_type": name,
+                "train_sequences_removed": int(np.count_nonzero(dropped)),
+                "train_attack_flows_removed": int(counts[dropped].sum()),
+                "removed_sources": int(len(np.unique(source[indices[dropped]]))),
+                "validation_sequences_primary": int(np.count_nonzero(primary_here & (kept[indices] == 1))),
+                "test_sequences_primary": int(np.count_nonzero(primary_here & (kept[indices] == 2))),
+                "validation_sequences_containing_type": int(np.count_nonzero(kept[indices] == 1)),
+                "test_sequences_containing_type": int(np.count_nonzero(kept[indices] == 2)),
+                "policy": "primary attack label removed from the training fold only; validation/test retained"})
+        removed_total = int(np.count_nonzero(held & (kept == 0)))
+        kept[held & (kept == 0)] = 3
     for witness in reservations:
+        if witness["purpose"] in holdout_types and witness["split"] == "train":
+            continue
         if kept[witness["sequence_index"]] != NAMES.index(witness["split"]):
             raise AssertionError("Coverage witness did not survive temporal exclusions")
     coverage = []
@@ -181,9 +219,10 @@ def split(start, first, max_end, source, attack_flows, cells, seed=4266):
         for code, split_name in enumerate(NAMES):
             row[split_name+"_sequences"] = int(np.count_nonzero(kept[indices] == code))
             row[split_name+"_attack_flows"] = int(counts[kept[indices] == code].sum())
+        row["held_out_from_training"] = name in holdout_types
         row["validation_unseen_in_train"] = row["validation_sequences"] > 0 and not row["train_sequences"]
         row["test_unseen_in_train"] = row["test_sequences"] > 0 and not row["train_sequences"]
-        if not row["train_sequences"]:
+        if not row["train_sequences"] and name not in holdout_types:
             raise AssertionError(f"Training type missing after exclusions: {name}")
         coverage.append(row)
     if any(not np.any(kept == code) for code in range(3)):
@@ -208,6 +247,13 @@ def split(start, first, max_end, source, attack_flows, cells, seed=4266):
              "retained_interval_overlap_sequences": overlap, "adjacent_source_pairs_cross_split": int(crossing.sum()),
              "coverage": coverage, "unreserved_coverage_requests": missing_reservations,
              "coverage_reservations": reservations,
+             "train_holdout_types": list(holdout_types), "train_holdout": train_holdout,
+             "train_holdout_sequences_removed": removed_total,
+             "coverage_policy": ("train all types except the declared training holdout" if holdout_types
+                                 else POLICY["coverage"]),
+             "train_holdout_scope": ("Fold assignment, reservations and purge are identical to a run without a holdout; "
+                                     "only training membership of the declared primary labels is removed, so validation/test "
+                                     "populations are unchanged. Removed training sequences count as excluded, not as temporal purge."),
              "duplicate_record_scope": "Identical complete raw records have the same source IP/start and therefore the same original window. No within-window duplicate removal or session/campaign independence claim.",
              "ratios_denominator": "original retained sequences, before augmentation; 60/20/20 is approximate after purge"}
     if np.any(crossing):

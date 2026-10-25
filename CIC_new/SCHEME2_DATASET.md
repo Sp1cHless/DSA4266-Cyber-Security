@@ -71,6 +71,20 @@ Copy the complete final `dataset/` directory to `datasets/dataset/`, or provide
 its path through the downstream `--dataset` option. Follow
 [`train/README.md`](../train/README.md) for model training and evaluation.
 
+## Training holdout for unseen attack subtypes
+
+Pass `--holdout-train-attacks <labels>` to remove declared primary attack labels
+from the training fold only, then rebuild. The option is recorded in the workflow
+settings and the preparation manifest, so `--resume` cannot change it, and it is
+rejected together with `--prepared`. Fold assignment, coverage reservations, the
+seeded RNG and the temporal purge are identical to a run without a holdout, so
+validation and test populations do not move; only training membership and every
+transform fitted on the training fold (vocabulary, scaler, bucket encoder, donor
+plan) exclude the declared labels. `preprocessed/split_notes.json` records removed
+sequences and residual non-primary flows. Use `--csv` to build from a full-schema
+CSV source. See [HOLDOUT_PROTOCOL.md](HOLDOUT_PROTOCOL.md) for the frozen label set,
+checks and limits.
+
 ## Evaluation scope
 
 The split uses global 15-minute blocks, approximately 60/20/20 allocation,

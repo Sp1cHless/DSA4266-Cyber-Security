@@ -5,7 +5,12 @@ import sys
 import time
 
 if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    # Running this file directly puts train/ first on sys.path, where it shadows the
+    # installed xgboost package with the local train/xgboost/ baseline. Import the
+    # project from the repository root and keep train/ off the search path.
+    script_dir = Path(__file__).resolve().parent
+    sys.path[0] = str(script_dir.parent)
+    sys.path[1:] = [entry for entry in sys.path[1:] if not entry or Path(entry).resolve() != script_dir]
 
 from train.common.data import Scheme2, check_disjoint
 from train.common.experiment import load_model, score, resolve_device, export_evaluation

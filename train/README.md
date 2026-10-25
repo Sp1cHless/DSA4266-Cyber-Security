@@ -208,6 +208,26 @@ generalization claim after test-informed development. The time-block split also
 does not guarantee unseen hosts/campaigns. This supervised screen is distinct from
 the earlier temporal AE + train-fitted linear readout experiment.
 
+## Unseen-subtype holdout reporting
+
+A dataset built with `--holdout-train-attacks` (see
+[the holdout protocol](../CIC_new/HOLDOUT_PROTOCOL.md)) omits declared attack
+subtypes from training but keeps them in validation and test. Train the control
+and holdout models with unchanged defaults, then compare their frozen predictions:
+
+```powershell
+python train/unseen_subtype_report.py --control <run1> <run2> <run3> <run4> `
+  --holdout <holdout-run1> <holdout-run2> <holdout-run3> <holdout-run4> `
+  --holdout-dataset <holdout-dataset>
+```
+
+The report accepts training-run or `evaluate.py` evaluation directories, requires
+identical prediction populations, and writes `UNSEEN_SUBTYPE.md`,
+`unseen_subtype.csv` and `manifest.json` in a fresh directory. `compare.py` keeps
+running per dataset; it refuses to mix the two dataset fingerprints by design.
+Two holdout datasets were built locally (not committed): the three-subtype set and
+the all-flooding set; see the protocol document for their test outcome.
+
 ## Focused implementation checks
 
 ```powershell

@@ -39,6 +39,8 @@ Read [SCHEME2_DATASET.md](SCHEME2_DATASET.md) for the construction contract,
 [preprocessing/README.md](preprocessing/README.md) for raw preparation and
 [representation_learning/README.md](representation_learning/README.md) for the
 input encoder. No Scheme1 source or historical detector is required.
+[HOLDOUT_PROTOCOL.md](HOLDOUT_PROTOCOL.md) defines the optional training holdout
+for unseen attack subtypes.
 
 ```powershell
 python -m unittest discover -s CIC_new/tests -t . -v

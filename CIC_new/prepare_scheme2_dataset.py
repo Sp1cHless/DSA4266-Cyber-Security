@@ -49,7 +49,7 @@ def completed(folder, marker, resume):
     return True
 
 
-def validate_export(dataset, encoded, donor_plan=None):
+def validate_export(dataset, encoded, donor_plan=None, holdout=()):
     """Check every output against frozen originals and the shared zero-shift plan."""
     dataset, encoded = map(Path, (dataset, encoded))
     manifest = read_json(dataset/"manifest.json")
@@ -143,7 +143,8 @@ def validate_export(dataset, encoded, donor_plan=None):
         raise ValueError("Missing synthetic plan rows")
     manifest.update(representation="scheme2", target_ratios=[.6, .2, .2],
         donor_plan_sha256=digest(dataset/"donor_plan.npz"),
-        shards=shards, schema_sha256=digest(dataset/"schema.json"), scaler_sha256=digest(dataset/"scaler.json"))
+        shards=shards, schema_sha256=digest(dataset/"schema.json"), scaler_sha256=digest(dataset/"scaler.json"),
+        train_holdout_attacks=list(holdout))
     write_json(dataset/"manifest.json", manifest)
     result = dict(passed=True, complete=True, feature_width=manifest["feature_width"], counts=manifest["counts"],
         target_ratios=[.6, .2, .2], P=manifest["P"], all_exported_samples_checked=checked,
@@ -158,7 +159,9 @@ def build(args):
     from CIC_new.representation_learning.learn_bucket_embeddings import train_bucket
     from CIC_new.representation_learning.encode_sequences import encode
 
-    source_before = signature(args.db.resolve())
+    source_before = signature((args.db or args.csv).resolve())
+    if args.prepared and args.holdout_train_attacks:
+        raise ValueError("A training holdout must be applied while splitting; it cannot be added to an existing preparation")
     if args.out is None:
         parent = ROOT/"CIC_new/outputs/scheme2_runs"
         parent.mkdir(parents=True, exist_ok=True)
@@ -175,7 +178,8 @@ def build(args):
     else:
         out.mkdir(parents=True, exist_ok=True)
         workflow = dict(complete=False, status="running", started_at=datetime.now().astimezone().isoformat(),
-            settings=settings, prediction_model_training_started=False, stages={})
+            settings=settings, prediction_model_training_started=False,
+            train_holdout_attacks=list(args.holdout_train_attacks), stages={})
     workflow.update(complete=False, status="running")
     write_json(out/"workflow.json", workflow)
     print(f"Output: {out}", flush=True)
@@ -188,9 +192,12 @@ def build(args):
             if not read_json(data/"manifest.json").get("complete") or read_json(data/"manifest.json").get("version") != 3:
                 raise ValueError("--prepared must be completed V3 Scheme2 preparation")
         elif not completed(data, "manifest.json", args.resume):
-            prepare(data, db=args.db, seed=args.seed, shard_size=args.shard_size)
+            prepare(data, db=args.db, csv=args.csv, seed=args.seed, shard_size=args.shard_size,
+                    holdout=args.holdout_train_attacks)
         if read_json(data/"manifest.json")["source"] != source_before:
             raise ValueError("Prepared data belongs to another source database")
+        if list(read_json(data/"manifest.json").get("train_holdout_attacks", [])) != list(args.holdout_train_attacks):
+            raise ValueError("Prepared data uses a different training holdout")
         # Preserve the established attack/host/activity sampling and seed offset.
         plan = out/"donor_plan.npz"
         expected_plan = make_plan(data, original_catalog(data), args.seed+1)
@@ -235,10 +242,10 @@ def build(args):
             export_dataset(data, encoded, dataset, seed=args.seed, shard_size=args.shard_size,
                            shift_mode="none", donor_plan=plan)
         print("[stage 5/5] Check every exported example against frozen donors", flush=True)
-        report = validate_export(dataset, encoded, donor_plan=plan)
+        report = validate_export(dataset, encoded, donor_plan=plan, holdout=args.holdout_train_attacks)
         from CIC_new.preprocessing.flow_metadata import export_flow_metadata
         export_flow_metadata(data, dataset)
-        if signature(args.db.resolve()) != source_before:
+        if signature((args.db or args.csv).resolve()) != source_before:
             raise ValueError("Raw source changed during preparation")
     except BaseException as error:
         workflow.update(complete=False, status="interrupted" if isinstance(error, KeyboardInterrupt) else "failed", error=str(error))
@@ -255,8 +262,12 @@ def build(args):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--db", type=Path, default=ROOT/"datasets/cic_2018_traffic.db")
+    source = p.add_mutually_exclusive_group()
+    source.add_argument("--db", type=Path, help="Full-schema SQLite source; default datasets/cic_2018_traffic.db")
+    source.add_argument("--csv", type=Path, help="Full-schema CSV source imported into the fresh workflow directory")
     p.add_argument("--out", type=Path, help="Fresh workflow directory; default reserves a unique scheme2_runs directory")
+    p.add_argument("--holdout-train-attacks", default="",
+                   help="Comma-separated primary attack labels removed from the training fold only; validation/test retained")
     p.add_argument("--prepared", type=Path, help="Optional existing completed V3 preparation")
     p.add_argument("--bucket-checkpoint", type=Path, help="Optional existing whole-bucket checkpoint for that exact V3 preparation")
     p.add_argument("--resume", action="store_true", help="Reuse completed stages only; requires the same explicit --out and settings")
@@ -271,6 +282,9 @@ def main():
     p.add_argument("--category-dim", type=int, default=16)
     p.add_argument("--bucket-dim", type=int, default=64)
     args = p.parse_args()
+    if args.db is None and args.csv is None:
+        args.db = ROOT/"datasets/cic_2018_traffic.db"
+    args.holdout_train_attacks = sorted({name.strip() for name in args.holdout_train_attacks.split(",") if name.strip()})
     if args.seed < 0 or any(getattr(args, k) <= 0 for k in ("cpu_threads", "shard_size", "batch_size", "embedding_steps", "validate_every", "val_limit", "category_dim", "bucket_dim")):
         p.error("Seed must be nonnegative and sizes/training budgets positive")
     if args.resume and args.out is None:
