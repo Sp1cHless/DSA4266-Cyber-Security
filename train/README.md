@@ -228,6 +228,28 @@ running per dataset; it refuses to mix the two dataset fingerprints by design.
 Two holdout datasets were built locally (not committed): the three-subtype set and
 the all-flooding set; see the protocol document for their test outcome.
 
+### Seed sweeps
+
+`compare.py` accepts one seed per family and `unseen_subtype_report.py` compares
+one control run with one holdout run. To bound retraining noise instead, train
+every arm with the same seed list and aggregate the frozen predictions:
+
+```powershell
+python train/seed_report.py --arm control=<dir1>,<dir2>,<dir3> `
+  --arm flooding=<dir1>,<dir2>,<dir3> `
+  --arm-dataset flooding=datasets/dataset_holdout_all_flooding
+```
+
+`--arm NAME=DIRS` is repeatable, one arm must be named `control`, and every other
+arm needs `--arm-dataset NAME=PATH` or `--held-out-attacks NAME=LABELS`. Directories
+are comma-separated training-run or `evaluate.py` evaluation paths. The report
+pairs each holdout run with the control run of the same seed, requires identical
+prediction populations and identical seed sets per arm, and writes `SEED_SWEEP.md`,
+`seed_sweep_arms.csv`, `seed_sweep_deltas.csv`, `seed_sweep_subtypes.csv` and
+`manifest.json`. It reports mean and sample standard deviation with the raw
+per-seed values; three seeds describe retraining noise only and support no
+significance claim. `--expect-seeds` defaults to 3.
+
 ## Focused implementation checks
 
 ```powershell

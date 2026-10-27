@@ -93,48 +93,112 @@ refuses to mix the two dataset fingerprints.
 
 ## Frozen test outcome
 
-Control versus holdout, frozen test split, each model scored with its own saved
-validation thresholds. Values are recall at the validation 1% FPR budget.
+Control versus holdout on the frozen test split, each run scored with its own
+saved validation thresholds. Every arm was trained with seeds 4266, 4267 and 4268
+and paired by seed; values are mean +/- sample standard deviation over the three
+seeds, and every delta is the paired holdout-minus-control difference.
 
-| Model | Set A pooled (n=134) | Set B pooled (n=202) | Set B DDoS (n=189) |
-|---|---|---|---|
-| cnn | 100.0% -> 99.3% | 100.0% -> 68.3% | 100.0% -> 66.1% |
-| hybrid | 99.3% -> 97.8% | 100.0% -> 68.3% | 100.0% -> 66.1% |
-| lstm | 99.3% -> 98.5% | 100.0% -> 75.3% | 100.0% -> 73.5% |
-| xgboost | 96.3% -> 99.3% | 96.5% -> 68.8% | 96.3% -> 66.7% |
+| Model | Set A pooled R@1% (n=134) | Delta | Set B pooled R@1% (n=202) | Delta | Seeds lower (B) |
+|---|---|---|---|---:|---:|
+| cnn | 99.75% -> 99.00% +/- 0.43 | -0.75 +/- 0.75 | 100.00% -> 68.32% +/- 0.00 | -31.68 +/- 0.00 | 3/3 |
+| hybrid | 99.75% -> 98.76% +/- 1.14 | -1.00 +/- 0.86 | 100.00% -> 68.32% +/- 0.00 | -31.68 +/- 0.00 | 3/3 |
+| lstm | 99.25% -> 98.76% +/- 1.14 | -0.50 +/- 1.14 | 99.50% -> 72.94% +/- 4.00 | -26.57 +/- 3.14 | 3/3 |
+| xgboost | 96.27% -> 99.00% +/- 0.43 | +2.74 +/- 0.43 | 96.37% -> 68.65% +/- 0.29 | -27.72 +/- 0.50 | 3/3 |
 
-Set A moved held-out recall by at most 6.5 points, inside the intervals, while
-seen subtypes drifted by up to 32 points. Set B produced a real, uniform loss of
-25-32 points. The difference is the surviving sibling: set A left DoS floods in
-training.
+Overall test average precision:
 
-Set B is not uniform across subtypes. Threshold-free average precision per
-subtype, cnn, control -> holdout:
+| Model | Control | Set A | Set B | Delta AP (A) | Delta AP (B) |
+|---|---|---|---|---|---|
+| cnn | 0.5747 +/- 0.0088 | 0.5806 +/- 0.0041 | 0.5047 +/- 0.0105 | +0.006 +/- 0.012 | -0.070 +/- 0.004 |
+| hybrid | 0.5788 +/- 0.0139 | 0.5718 +/- 0.0107 | 0.4868 +/- 0.0058 | -0.007 +/- 0.017 | -0.092 +/- 0.008 |
+| lstm | 0.5803 +/- 0.0088 | 0.5555 +/- 0.0189 | 0.5081 +/- 0.0031 | -0.025 +/- 0.021 | -0.072 +/- 0.009 |
+| xgboost | 0.4153 +/- 0.0016 | 0.4125 +/- 0.0027 | 0.3204 +/- 0.0052 | -0.003 +/- 0.004 | -0.095 +/- 0.007 |
 
-| Subtype | Flows per train sequence | AP control -> holdout |
-|---|---:|---|
-| `DoS_attacks-GoldenEye` | 5,477 | 1.000 -> 1.000 |
-| `DoS_attacks-SlowHTTPTest` | 3,013 | 1.000 -> 1.000 |
-| `DDOS_attack-HOIC` | 2,386 | 1.000 -> 1.000 |
-| `DDoS_attacks-LOIC-HTTP` | 701 | 0.954 -> 0.542 |
-| `DDOS_attack-LOIC-UDP` | 18 | 1.000 -> 0.000 |
+Set A moved held-out recall by at most 3 points, with mixed signs across models and
+seeds. Set B produced a uniform loss of 27-32 points, lower in every seed. The
+difference is the surviving sibling: set A left DoS floods in training. Seed
+replication narrows the set A conclusion to "no effect larger than about 2 recall
+points or 0.02 AP"; it does not change the set B conclusion.
 
-The retained families also moved: `Brute_Force_-Web` fell 45.2% -> 20.5% (cnn) and
-36.8% -> 9.6% (xgboost) at 1% FPR, and XSS rose from 14.5% to 96.8% at the 0.1%
-budget with a near-unchanged threshold (0.9869 -> 0.9891). Detection is therefore
-relative to the training mixture, not an absolute property of the attack.
+Set B is not uniform across subtypes. Threshold-free average precision, cnn, per
+seed under the holdout:
+
+| Subtype | Flows per train sequence | AP per seed | Mean |
+|---|---:|---|---:|
+| `DoS_attacks-GoldenEye` | 5,477 | 1.000 / 1.000 / 1.000 | 1.000 |
+| `DoS_attacks-SlowHTTPTest` | 3,013 | 1.000 / 1.000 / 1.000 | 1.000 |
+| `DDOS_attack-HOIC` | 2,386 | 1.000 / 1.000 / 1.000 | 1.000 |
+| `DDoS_attacks-LOIC-HTTP` | 701 | 0.542 / 0.547 / 0.546 | 0.545 |
+| `DDOS_attack-LOIC-UDP` | 18 | 0.000 / 0.000 / 0.000 | 0.000 |
+
+LOIC-HTTP recall is exactly 54.55% (60 of 110) in every seed, and LOIC-UDP has no
+ranking signal at all in every seed, so the volume gradient is not a threshold or
+initialization artifact.
+
+### Corrections from the single-seed report
+
+The first single-seed write-up overstated two retained-family effects. They do not
+survive replication and are retracted:
+
+- `Brute_Force_-Web` (cnn) "45.2% -> 20.5%": control per seed 45.2 / 35.5 / 24.1,
+  holdout 20.5 / 41.6 / 22.9, delta -6.6 +/- 16.1 points with 2 of 3 seeds lower.
+  Seed 4266 was the control's best and the holdout's worst. The drop is not
+  distinguishable from retraining noise, and Web recall itself is high-variance
+  across seeds.
+- `Brute_Force_-XSS` at 0.1% (cnn) "14.5% -> 96.8%": control itself scores 14.5 /
+  96.8 / 12.9 and holdout 96.8 / 14.5 / 12.9, mean 41.40% in both arms. A few XSS
+  sequences sit on the 0.1% threshold, so it flips between seeds. It is a fragile
+  metric (n=62 over 4 hosts), not a capability change.
+
+What does survive is concentrated in xgboost: `Brute_Force_-Web` fell 36.55% ->
+9.04% (delta -27.51 +/- 2.43, 3/3 seeds, AP 0.015 -> 0.004) and `Infilteration`
+fell 52.99% -> 42.81% (delta -10.18 +/- 1.50, 3/3 seeds, AP 0.098 -> 0.047).
+`lstm` also lost Web recall (37.55% -> 26.31%, -11.24 +/- 4.23, 3/3) with a nearly
+unchanged AP, which points at a threshold shift rather than lost ranking.
 
 Interpretation: the detector generalises to unseen attacks only when their
 signature is a gross volume anomaly. High-volume floods remain detectable with no
 flood exemplars; the low-rate UDP flood becomes undetectable. The set A result was
-supported by surviving DoS siblings, not by learning the removed subtypes.
+supported by surviving DoS siblings, not by learning the removed subtypes. Part of
+the set B loss is a global decision-boundary shift, but it is model-dependent and
+reliable only for xgboost.
+
+## Seed replication
+
+Single-seed differences cannot separate a holdout effect from retraining noise.
+The control, set A and set B arms were therefore retrained with seeds 4266, 4267
+and 4268, all other settings unchanged, and scored on the frozen test split with
+each run's own validation thresholds. A seed changes weight initialization, batch
+order and dropout only: the split, the frozen bucket encoder, the features and the
+class weights are fixed, so the sweep bounds initialization noise, not sampling
+uncertainty.
+
+Aggregate the arms with `train/seed_report.py`:
+
+```powershell
+python train/seed_report.py --arm control=<dirs> --arm subtype=<dirs> `
+  --arm flooding=<dirs> --arm-dataset subtype=datasets/dataset_holdout_xss_slowhttp_hoic `
+  --arm-dataset flooding=datasets/dataset_holdout_all_flooding
+```
+
+The three-seed output is kept in `train/runs/seed_sweep_3seed/` (ignored by git).
+
+The report pairs each holdout run with the control run of the same seed, refuses
+mismatched populations or seed sets, and writes `SEED_SWEEP.md`,
+`seed_sweep_arms.csv`, `seed_sweep_deltas.csv`, `seed_sweep_subtypes.csv` and
+`manifest.json`. It reports mean, sample standard deviation and the raw per-seed
+values. Test is scored once per seed, so repeated test use is disclosed in the
+manifest.
 
 ## Limits
 
 Small per-subtype counts, one-host DoS campaigns, single campaigns per flood
 subtype and shared hosts/campaigns across folds all limit inference. Wilson
-intervals describe sampling uncertainty only. Held-out recall is detection of the
-label as generic malicious traffic, not subtype or family classification. Set B
-removes only 3.9% of positives, yet retained families still moved by up to 27
-points, so part of the set B loss is a global decision-boundary shift rather than
-an isolated unseen-family effect.
+intervals describe sampling uncertainty only, and three seeds bound retraining
+noise only; neither removes host or campaign dependence. Held-out recall is
+detection of the label as generic malicious traffic, not subtype or family
+classification. Set B removes only 3.9% of positives, yet xgboost shows a
+consistent retained-family shift (Web -27.5 and Infilteration -10.2 points, 3 of 3
+seeds), so part of the set B loss is a global decision-boundary change rather than
+an isolated unseen-family effect. Neural retained-family changes stay inside the
+seed band and should not be read as evidence either way.
