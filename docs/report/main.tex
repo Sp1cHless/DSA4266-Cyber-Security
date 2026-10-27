@@ -1,0 +1,143 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb,booktabs,url}
+\newcommand{\pending}[1]{\par\noindent\textit{Pending team contribution: #1}\par}
+\title{Temporal Intrusion Classification with Frozen Bucket Embeddings and Vector Superimposition}
+\author{\IEEEauthorblockN{DSA4266 Project Team}\IEEEauthorblockA{Author names and affiliations to be added}}
+\begin{document}
+\maketitle
+\begin{abstract}
+Network intrusion detection requires identifying rare attacks while controlling false alarms. We construct source-host sequences from NetFlow records, learn compact representations of behavioural time buckets, and freeze these representations before supervised classification. Each baseline sequence spans 100 seconds and contains ten 10-second buckets. A bucket autoencoder combines numerical statistics with protocol, application and service representations into a 64-dimensional vector. Training-only vector superimposition combines benign backgrounds with benign or malicious donors, while a separate flow-count channel retains intensity. The planned evaluation compares convolutional, recurrent, hybrid and boosted-tree classifiers, including held-out attack subtypes, circular shifts and temporal resolution. This working draft documents the implemented preprocessing and representation stages; empirical comparisons and conclusions remain to be supplied from verified artifacts.
+\end{abstract}
+\begin{IEEEkeywords}
+network intrusion detection, representation learning, temporal classification, data augmentation
+\end{IEEEkeywords}
+
+\section{Introduction}
+An individual flow describes one exchange but may omit the surrounding evolution of a host's behaviour. Ordered behavioural intervals can retain traffic intensity, service usage, destination diversity and inactivity. The challenge is to determine whether these representations support reliable detection under severe imbalance, rather than merely reflecting host or capture-specific regularities.
+
+Our study asks how frozen bucket embeddings and training-only vector superimposition support temporal intrusion classification. The downstream work compares CNN, LSTM, CNN--LSTM and XGBoost models. A proposed generalization experiment excludes selected attack subtypes while retaining related subtypes within broad classes such as DoS and DDoS. This differs from excluding an entire broad attack class.
+\pending{Finalize research questions and contribution statements after auditing completed experiments. Do not claim gains or zero-day generalization before results are available.}
+
+\section{Background and Related Techniques}
+An autoencoder learns a compact representation through reconstruction. Here it transforms individual traffic buckets, rather than acting as the final anomaly detector. Supervised models subsequently classify sequences of frozen bucket representations. CNNs learn local patterns across time, LSTMs propagate recurrent state, and the hybrid combines both. A positional XGBoost baseline provides a tree-based comparison.
+\pending{Add primary literature on flow-based intrusion detection, learned representations and vector-space augmentation. Distinguish positional trees from an order-invariant baseline.}
+
+\section{Data and Temporal Preprocessing}
+\subsection{Source Data and Targets}
+The current source is the NetFlow V3 representation of CSE-CIC-IDS2018. The UQ source page reports 20,115,529 flows, including 2,600,903 attack flows~\cite{uqdata}. Original source features, engineered bucket statistics and final model channels have different dimensions.
+
+Each original sequence belongs to one source IPv4 address and one epoch-aligned, nonoverlapping 100-second interval. For flow start time $s_i$ in milliseconds, the origin is
+\begin{equation}
+w_i=100000\left\lfloor s_i/100000\right\rfloor,
+\end{equation}
+and the bucket position is $\lfloor(s_i-w_i)/10000\rfloor$. Ten positions retain the elapsed-time grid. Empty positions have a separate zero mask and zero inputs; entirely empty source-window combinations are not enumerated.
+
+A bucket is malicious if any assigned flow is malicious, and a sequence is malicious if any bucket is malicious. Addresses, attack names and time identifiers remain audit metadata. Primary attack annotations record the most frequent malicious type; they do not describe all attack memberships.
+
+Input checks require the expected columns, nonnegative integer fields, binary labels, nonmissing identifiers, and end times no earlier than starts. Flow counts are reconciled between source and staging. These checks establish construction consistency, not original-label correctness. Full-flow summaries belong to their start bucket even if they end later; this is offline detection rather than an early-warning latency benchmark.
+
+\subsection{Behavioural Bucket Statistics}
+Each observed bucket receives 82 numerical statistics describing volumes, durations, protocol/application diversity, port reuse and concentration, destination diversity, TCP flags, ICMP/DNS activity, packet lengths, retransmissions, packet-size proportions, TCP windows and within-bucket start-time gaps. Destination addresses are used only for equality and diversity calculations.
+
+Separate histograms summarize protocol, L7 application and destination-service proportions. Services group destination ports into DNS, web, SSH, FTP, mail, RDP, SMB and other. The representation therefore retains service information while avoiding exact endpoint identities.
+
+\subsection{Temporal Split and Training-Only Fitting}
+The baseline allocates complete global 15-minute blocks to approximately 60\%, 20\% and 20\% training, validation and test, balancing retained original-sequence counts. A 100-second boundary embargo and actual-flow-end envelope exclusions protect boundaries. Attack metadata reserves training coverage for every type and feasible held-out coverage. This is label-informed blocked allocation, not a chronological future-time split.
+
+Only retained real training active buckets determine category vocabularies and numerical transforms. Non-ratio/non-entropy statistics receive $\log(1+x)$; all 82 dimensions are then standardized using training means and scales. Empty buckets are reset to zero. Unknown categories receive a dedicated slot distinct from a known category with code zero. Hosts and campaigns can recur in separated blocks, so the baseline measures same-environment held-out-time-block classification.
+
+\subsection{Recorded Baseline Population}
+Table~\ref{tab:population} reproduces the construction protocol's recorded counts. The underlying artifacts were unavailable during drafting; manifests must be verified before submission. Held-out-subtype and resolution variants require their own counts.
+\begin{table}[t]
+\caption{Recorded baseline sequence population}
+\label{tab:population}
+\centering\small
+\begin{tabular}{lrrr}
+\toprule
+Group & Train & Validation & Test\\
+\midrule
+Real benign & 757,559 & 250,229 & 262,274\\
+Real malicious & 8,093 & 917 & 851\\
+Synthetic benign & 8,093 & 0 & 0\\
+Synthetic malicious & 8,093 & 0 & 0\\
+\bottomrule
+\end{tabular}
+\end{table}
+Flow and retained sequence prevalence have different denominators. Validation/test malicious-sequence shares are approximately 0.365\%/0.323\%; aggregation and exclusions must accompany these figures.
+\pending{Add audited flow/window coverage, occupancy, attack-type counts and exclusions.}
+
+\section{Bucket Representation and Augmentation}
+\subsection{Learning a Bucket Representation}
+Let $x_t\in\mathbb{R}^{82}$ denote standardized numeric statistics and $p_{tf}$ the categorical distribution for field $f\in\{\mathrm{protocol,L7,service}\}$. A numerical branch maps $x_t$ to 32 values. Each field has a learned category table $E_f$ with 16 columns; $p_{tf}E_f$ is its frequency-weighted representation. Concatenation gives 80 values, encoded through widths $80\rightarrow128\rightarrow64$ and L2-normalized:
+\begin{equation}
+z_t=\operatorname{normalize}_2\bigl(g_\theta([h(x_t),p_{t1}E_1,p_{t2}E_2,p_{t3}E_3])\bigr).
+\end{equation}
+A decoder reconstructs numeric statistics and categorical distributions. The objective is
+\begin{equation}
+\mathcal{L}_{\mathrm{bucket}}=\frac{\|x_t-\hat{x}_t\|_2^2}{82}+\frac{1}{3}\sum_f\operatorname{CE}(p_{tf},\hat{p}_{tf}).
+\end{equation}
+Default fitting uses Adam, learning rate 0.001, batch 512 and 5,000 updates. Validation is evaluated every 200 updates on a fixed subset of at most 4,096 active buckets; lowest reconstruction loss selects the checkpoint. Real active training buckets from both classes fit the encoder without attack labels in the reconstruction objective.
+
+The encoder is frozen before encoding originals and generating mixtures. It learns individual bucket content; temporal transitions are learned downstream. Reconstruction improvement alone does not establish temporal learning or detection utility.
+
+\subsection{Training-Only Vector Superimposition}
+Let $P$ be the real malicious training-sequence count. The baseline adds $P$ benign--malicious and $P$ benign--benign mixtures. Donors are real training originals from different source IPs. Background sampling balances occupancy bands, hosts and sequences; malicious sampling balances type, host and sequence. Donors may repeat.
+
+With masks $m_t^a,m_t^b$, the zero-shift baseline combines corresponding positions:
+\begin{equation}
+z_t^{\mathrm{mix}}=\operatorname{normalize}_2(m_t^az_t^a+m_t^bz_t^b).
+\end{equation}
+Masks and bucket labels use logical OR; flow counts add. The final channel retains standardized log total-flow count,
+\begin{equation}
+c_t=(\log(1+n_t)-\mu_{\mathrm{train}})/\sigma_{\mathrm{train}},
+\end{equation}
+with empty positions zeroed. Each input is $10\times65$: 64 embedding coordinates and one intensity coordinate, plus a separate mask.
+
+These are learned-space mixtures, not observed combined flows. Nonlinear encoding need not commute with raw-flow addition. Their utility requires evaluation, and donor reuse does not create independent new attacks. Validation/test remain real only.
+
+\subsection{Representation Diagnostics}
+Before downstream fitting, visualize frozen real active validation-bucket vectors, excluding masked positions. Colour by bucket attack presence, traffic count, service, host group and time block to inspect attack structure and nuisance variation. Use bucket labels at this scale: benign buckets inside malicious sequences are not automatically malicious.
+
+For a sequence-level input/output comparison, retain identical real validation sequence IDs. Flattening can retain positions and masks; masked pooling must be described as discarding order. After classifier training, visualize penultimate-layer neural representations for those IDs. Sequence vectors and individual bucket vectors answer different questions. Projections are exploratory descriptions, not performance estimates~\cite{projector}.
+\pending{Insert encoder loss curves, reconstruction diagnostics and reproducible PCA/projector figures. Do not invent separation or performance gains.}
+
+\section{Downstream Experimental Design}
+\subsection{Common Model Screening}
+\pending{Groupmates: supply audited CNN, LSTM, CNN--LSTM and XGBoost configurations, seeds, versions and common input fingerprints.}
+Current screening balances the total objective weight of real benign, real malicious, synthetic benign and synthetic malicious groups. Real-validation AP selects checkpoints. Evaluation uses natural prevalence; outputs are not assumed calibrated natural-prior probabilities. Model capacities differ, so this is baseline pipeline screening rather than equal-capacity comparison.
+
+\subsection{Held-Out Subtypes within Broad Classes}
+The intended experiment excludes selected attack subtypes while retaining related subtypes in each broad class. The illustrative case holds out HTTP DDoS and Slowloris DoS variants while retaining other DDoS/DoS variants. Exact labels and separate versus joint folds remain to be supplied.
+
+A strictly unseen-to-pipeline subtype must be excluded from vocabulary/scaler fitting, encoder fitting, augmentation donors, classifier fitting and model/threshold-selection validation. Check full attack membership, not only primary labels, when removing mixed-type windows. Reusing an encoder exposed to excluded subtypes defines a different, unseen-to-classifier experiment and must be disclosed. The current baseline preserves every type in training and requires explicit adaptation.
+\pending{Document actual folds, exposure policy, mixed-type handling, counts and retained within-class support. User-reported experiments are ongoing/completed; results are not verified here.}
+
+\subsection{Circular Shift and Temporal Resolution}
+A donor-relative shift rotates one donor before superimposition, changing relative alignment. A whole-input shift rotates the final sequence and mask together, changing endpoints and wraparound adjacency. Baseline donor displacement is zero. The currently exposed whole-input experiment is LSTM-specific; other variants require verification.
+
+The team also plans or has conducted variations of the 100-second duration and 10-second interval. Their ratio determines sequence length. Changing both proportionally preserves length but changes temporal scale. Each configuration requires consistent reconstruction, fitting and model geometry; current code includes fixed ten-step assumptions.
+\pending{Supply actual grids, offsets, seeds, split application, comparable cohorts and source coverage.}
+
+\section{Evaluation and Results}
+Validation AP selects checkpoints. Thresholds maximize validation recall under 1\%/0.1\% FPR budgets and freeze before test scoring. Report measured test FPR, recall, precision, F1, confusion counts, AP and ROC-AUC, including retained and held-out subtypes separately. Missing subtype support must be disclosed.
+
+Validation selects both checkpoints and thresholds, so its results are exploratory. Historical work has inspected the existing test split; a newly untouched-holdout claim requires a fresh population.
+\pending{Insert verified screening results, subtype generalization, shift ablations and temporal-resolution experiments. Include counts and repeat-seed variability where available.}
+
+\section{Discussion and Limitations}
+\pending{Explain observed successes/failures using subgroup errors, traffic occupancy, reconstruction and representations. Separate observations from hypotheses.}
+Reconstruction does not guarantee class separation. Temporal models can exploit intensity, service or host proxies. Circular rotation preserves much local order; it cannot alone establish temporal importance. Positional XGBoost also retains time positions. An order-invariant or matched permutation control would strengthen temporal claims.
+
+Other limits include imported-label uncertainty, source/campaign recurrence, donor dependence, synthetic-vector realism, unequal capacities and historical test inspection. Attack-enriched projector samples do not preserve natural prevalence.
+
+\section{Conclusion}
+\pending{Complete after evidence is available: answer the research questions and delimit contributions and generalization claims.}
+
+\begin{thebibliography}{9}
+\bibitem{uqdata} M. Portmann et al., ``Machine Learning-Based NIDS Datasets,'' University of Queensland. [Online]. Available: \url{https://staff.itee.uq.edu.au/marius/NIDS_datasets/}. Accessed: Oct. 25, 2026.
+\bibitem{projector} TensorFlow, ``Visualizing Data using the Embedding Projector in TensorBoard.'' [Online]. Available: \url{https://www.tensorflow.org/tensorboard/tensorboard_projector_plugin}. Accessed: Oct. 25, 2026.
+\end{thebibliography}
+\appendices
+\section{Reproducibility Artifacts}
+\pending{Add full features, exact label mappings, fold manifests, exclusions, donor plans, configs, versions, seeds, hashes and projection settings. Keep the submitted main section within eight pages; relocate supporting material as needed.}
+\end{document}
