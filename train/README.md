@@ -8,6 +8,9 @@ Different team members run their assigned model independently on their own machi
 then share the completed run folders for one common comparison. Windows, macOS and
 Linux use the same Python entry points; CUDA is optional.
 
+See [provisional LSTM and Web findings](LSTM_WEB_FINDINGS.md) for the current
+baseline decision, circular-shift results and interpretation boundaries.
+
 ## Input and common training policy
 
 The default input is `<repository>/datasets/dataset/`, containing the completed
@@ -68,6 +71,14 @@ randomness; cross-device/backend bitwise equality is not promised.
 
 ## Run from the repository root
 
+For the four sequence-duration/bucket-duration comparisons using completed raw
+preparations, use [TEMPORAL_LSTM.md](TEMPORAL_LSTM.md). `run_temporal_lstm.py`
+compares the selected original LSTM baseline with four new-window LSTMs, retaining
+its saved training/input-encoder settings. It reports Infilteration and Brute
+Force Web recall at both FPR budgets, records current package versions and processes
+train/validation only. The original 100s/10s LSTM is referenced without refitting.
+The earlier [CNN driver](TEMPORAL_CNN.md) remains a separate optional experiment.
+
 Each member uses their own environment, the same code revision, requirements,
 dataset, seed and published baseline settings. Do not change optimization settings
 independently while screening model families. On macOS/Linux, for example:
@@ -126,6 +137,14 @@ Use `--epochs`, `--batch-size`, `--rounds` or `--patience` only when intentional
 changing a budget. Rerun all relevant candidates under a consistent screening plan.
 
 ## Common evaluation and model selection
+
+For the separate four-model circular-shift retraining experiment, see
+[the circular-shift guide](CIRCULAR_SHIFT.md). `python train/run_circular_shift.py`
+runs fresh chronological/shifted pairs for all four families (eight fits) and
+writes within-family metric deltas and per-attack comparisons. Add `--shift-only`
+for four shifted fits without paired controls. Every individual model entry point
+also accepts `--circular-shift-start 5`; start 0 retains chronological order.
+This diagnostic reuses the training cohort and uses validation only, not test.
 
 The prediction target is binary attack presence per 100-second sequence. Primary
 checkpoint and ranking metric: **average precision (AP)** computed by sklearn

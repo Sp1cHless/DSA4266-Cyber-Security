@@ -16,6 +16,7 @@ import numpy as np
 from . import bucket_statistics as bf
 
 from . import sequence_index
+from .temporal import DEFAULT_GRID, TemporalGrid
 
 FIELDS = ("protocol", "l7", "service")
 NUMERIC_SCHEMA = bf.make_schema([])
@@ -33,9 +34,9 @@ def service_ids(ports):
     return result
 
 
-def raw_bucket(events):
-    x,mask,y,flows,attacks=bf.aggregate(events,bf.make_schema([]))
-    bucket=events[:,bf.E["flow_start_milliseconds"]]//bf.BUCKET_MS
+def raw_bucket(events, grid=DEFAULT_GRID):
+    x,mask,y,flows,attacks=bf.aggregate(events,bf.make_schema([], grid))
+    bucket=events[:,bf.E["flow_start_milliseconds"]]//grid.bucket_ms
     categories={"protocol":events[:,bf.E["protocol"]],"l7":events[:,bf.E["l7_proto"]],
                 "service":service_ids(events[:,bf.E["l4_dst_port"]])}
     hist={}
@@ -46,7 +47,7 @@ def raw_bucket(events):
                 flow_counts=flows,attack_flow_counts=attacks),hist
 
 
-def aggregate_originals(out,shard_size):
+def aggregate_originals(out,shard_size,grid=DEFAULT_GRID):
     """All original buckets are computed BEFORE any split/vocabulary/scaler."""
     conn=sequence_index.connect(out)
     try:
@@ -62,7 +63,7 @@ def aggregate_originals(out,shard_size):
             for field in FIELDS:
                 coos=[]
                 for i,(_,_,hist) in enumerate(buffer):
-                    coo=hist[field].copy();coo[:,0]+=i*10;coos.append(coo)
+                    coo=hist[field].copy();coo[:,0]+=i*grid.timesteps;coos.append(coo)
                 payload["categories_"+field]=np.concatenate(coos)
             payload["sample_id"]=ids
             filename=f"part_{part:06d}.npz"
@@ -74,7 +75,7 @@ def aggregate_originals(out,shard_size):
             msid,start=next(meta)
             if sid!=msid:raise AssertionError("Original sequence ordering mismatch")
             events=bf.local_events(np.asarray([r[1:] for r in group],dtype=np.int64),start)
-            values,hist=raw_bucket(events);buffer.append((sid,values,hist));total+=1
+            values,hist=raw_bucket(events,grid);buffer.append((sid,values,hist));total+=1
             if len(buffer)>=shard_size:flush()
             if total%10000==0:print(f"[bucket-before-split] {total:,} originals",flush=True)
         if buffer:flush()
@@ -82,17 +83,17 @@ def aggregate_originals(out,shard_size):
     finally:conn.close()
 
 
-def selected_distribution(coo,rows,vocabulary,n):
+def selected_distribution(coo,rows,vocabulary,n,timesteps=10):
     """Map raw category histograms AFTER train-only vocabulary is fixed."""
     mapping={int(code):i+1 for i,code in enumerate(vocabulary)}  # slot 0 = UNK
     old_to_new=np.full(int(rows.max())+1 if len(rows) else 0,-1,dtype=int)
     old_to_new[rows]=np.arange(len(rows))
-    old=coo[:,0]//10
+    old=coo[:,0]//timesteps
     eligible=(old<len(old_to_new))
     coo=coo[eligible];old=old[eligible]
     eligible=old_to_new[old]>=0;coo=coo[eligible];old=old[eligible]
-    result=np.zeros((n,10,len(vocabulary)+1),dtype=np.float32)
-    new=old_to_new[old];b=coo[:,0]%10
+    result=np.zeros((n,timesteps,len(vocabulary)+1),dtype=np.float32)
+    new=old_to_new[old];b=coo[:,0]%timesteps
     categories=np.fromiter((mapping.get(int(c),0) for c in coo[:,1]),dtype=np.int64,count=len(coo))
     np.add.at(result,(new,b,categories),coo[:,2])
     denom=result.sum(axis=-1,keepdims=True)
@@ -100,7 +101,7 @@ def selected_distribution(coo,rows,vocabulary,n):
     return result
 
 
-def fit_and_export(out):
+def fit_and_export(out,grid=DEFAULT_GRID):
     conn=sequence_index.connect(out)
     try:
         split_lookup={int(sid):name for sid,name in conn.execute("SELECT sequence_id,split FROM original_sequences")}
@@ -113,13 +114,13 @@ def fit_and_export(out):
                 moments.add(bf.transform_log(a["numeric"][active],NUMERIC_SCHEMA))
                 for field in FIELDS:
                     coo=a["categories_"+field]
-                    vocab[field].update(map(int,coo[train[coo[:,0]//10],1]))
+                    vocab[field].update(map(int,coo[train[coo[:,0]//grid.timesteps],1]))
         vocab={f:sorted(v) for f,v in vocab.items()}
         scaler=moments.finish()
         sequence_index.write_json(out/"scaler.json",{**scaler,"population":"real retained training active buckets only"})
         schema=dict(version=3,numeric_names=bf.NUMERIC_NAMES,vocabularies=vocab,
                     category_slots={f:len(v)+1 for f,v in vocab.items()},unknown_index=0,
-                    timesteps=10,bucket_seconds=10,sequence_seconds=100,
+                    **grid.settings(),
                     log1p_columns=NUMERIC_SCHEMA["log1p_columns"],mask_separate=True,
                     augmentation="training-only circular shift then frozen-embedding addition and L2")
         sequence_index.write_json(out/"schema.json",schema)
@@ -135,7 +136,7 @@ def fit_and_export(out):
                     payload={key:a[key][rows] for key in ("mask","y_bucket","y_sequence","flow_counts","attack_flow_counts","sample_id")}
                     payload["numeric"]=bf.normalize(a["numeric"][rows],payload["mask"],NUMERIC_SCHEMA,scaler)
                     for field in FIELDS:
-                        h=selected_distribution(a["categories_"+field],rows,vocab[field],len(rows))
+                        h=selected_distribution(a["categories_"+field],rows,vocab[field],len(rows),grid.timesteps)
                         if not np.allclose(h.sum(axis=-1),payload["mask"]):raise AssertionError("Histogram/mask mismatch")
                         payload["hist_"+field]=h
                     filename=f"part_{parts[split]:06d}.npz";parts[split]+=1;counts[split]+=len(rows)
@@ -171,7 +172,9 @@ def import_csv(source,target,chunksize=250000):
     finally:conn.close()
 
 
-def prepare(out,db=None,csv=None,seed=4266,shard_size=2048):
+def prepare(out,db=None,csv=None,seed=4266,shard_size=2048,
+            sequence_seconds=100,bucket_seconds=10):
+    grid=TemporalGrid(sequence_seconds,bucket_seconds)
     out=Path(out).resolve()
     if bool(db)==bool(csv):raise ValueError("Supply exactly one full-schema --db or --csv")
     if out.exists() and any(out.iterdir()):raise FileExistsError(out)
@@ -179,15 +182,16 @@ def prepare(out,db=None,csv=None,seed=4266,shard_size=2048):
     supplied=Path(db or csv).resolve();signature=sequence_index.signature(supplied)
     manifest=dict(version=3,complete=False,seed=seed,source=signature,
                   order=["sequence_construction","bucket_aggregation","split","training_only_fitting","embedding_space_training_augmentation"],
-                  categorical_fields=list(FIELDS),model_training_started=False)
+                  categorical_fields=list(FIELDS),model_training_started=False,
+                  temporal_grid=grid.settings())
     sequence_index.write_json(out/"manifest.json",manifest)
     if csv:
         db=out/"raw_source.sqlite";import_csv(Path(csv),db)
     else:db=Path(db).resolve()
-    sequence_index.index_source(out,db)
-    aggregate_originals(out,shard_size)
-    sequence_index.split_originals(out,seed)
-    counts=fit_and_export(out)
+    sequence_index.index_source(out,db,grid)
+    aggregate_originals(out,shard_size,grid)
+    sequence_index.split_originals(out,seed,grid)
+    counts=fit_and_export(out,grid)
     if signature!=sequence_index.signature(supplied):raise AssertionError("Source changed")
     manifest.update(complete=True,counts=counts,
                     split_policy="global 15min blocks; 100s guards and actual-end envelope exclusions",
@@ -203,6 +207,14 @@ if __name__=="__main__":
     p.add_argument("--out",type=Path,required=True)
     p.add_argument("--seed",type=int,default=4266)
     p.add_argument("--shard-size",type=int,default=2048)
+    p.add_argument("--sequence-seconds",type=int,default=100)
+    p.add_argument("--bucket-seconds",type=int,default=10)
     args=p.parse_args()
     if args.shard_size<1:p.error("Positive shard size required")
-    prepare(args.out,args.db,args.csv,args.seed,args.shard_size)
+    try:
+        TemporalGrid(args.sequence_seconds,args.bucket_seconds)
+    except ValueError as error:
+        p.error(str(error))
+    import logging
+    logging.basicConfig(level=logging.INFO,format="%(asctime)s %(levelname)s %(message)s")
+    prepare(args.out,args.db,args.csv,args.seed,args.shard_size,args.sequence_seconds,args.bucket_seconds)

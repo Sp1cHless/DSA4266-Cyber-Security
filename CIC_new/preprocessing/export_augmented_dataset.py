@@ -70,7 +70,8 @@ def export_fixed_plan(data,train,writer,path,shift_mode):
     if not np.array_equal(train.meta["label"][right].astype(bool),malicious):
         raise ValueError("Plan class does not match second donor")
     shifts=plan["right_shift_buckets"]
-    if np.any(shifts<0) or np.any(shifts>=10) or (shift_mode=="none" and np.any(shifts)):
+    timesteps=train.arrays["mask"].shape[1]
+    if np.any(shifts<0) or np.any(shifts>=timesteps) or (shift_mode=="none" and np.any(shifts)):
         raise ValueError("Plan shifts do not match requested mode")
     for start in range(0,n,128):
         end=min(start+128,n)
@@ -82,19 +83,24 @@ def export_fixed_plan(data,train,writer,path,shift_mode):
                 str(train.meta[right[i]]["attack"]) if malicious[i] else "Benign")
 
 
-def export_dataset(data,encoded,out,seed=4266,shard_size=2048,shift_mode="circular",originals_only=False,donor_plan=None):
+def export_dataset(data,encoded,out,seed=4266,shard_size=2048,shift_mode="circular",originals_only=False,donor_plan=None,
+                   splits=("train","validation","test")):
     data=Path(data).resolve();encoded=Path(encoded).resolve();out=Path(out).resolve()
+    splits=tuple(splits)
+    if splits not in (("train","validation"),("train","validation","test")):
+        raise ValueError("Export either train/validation or train/validation/test in that order")
     if shift_mode not in ("circular","none"):raise ValueError("Unknown shift mode")
     if shard_size<1:raise ValueError("Positive shard size required")
     if originals_only and donor_plan is not None:raise ValueError("An originals-only export cannot use a donor plan")
     if out.exists() and any(out.iterdir()):raise FileExistsError(out)
-    stores={s:Encoded(encoded,s) for s in ("train","validation","test")}
+    stores={s:Encoded(encoded,s) for s in splits}
     identity=fingerprint(data)
     if any(s.manifest["data_fingerprint"]!=identity for s in stores.values()):raise ValueError("Encoding/data mismatch")
     out.mkdir(parents=True,exist_ok=True)
     manifest=dict(complete=False,format="model-independent-sequence-shards",data_fingerprint=identity,
                   embedding_checkpoint_sha256=stores["train"].manifest["checkpoint_sha256"],seed=seed,
-                  feature_width=stores["train"].manifest["bucket_dim"]+1,timesteps=10,
+                  feature_width=stores["train"].manifest["bucket_dim"]+1,
+                  timesteps=stores["train"].arrays["mask"].shape[1],
                   shift_mode=shift_mode,originals_only=originals_only)
     path=out/"manifest.json";path.write_text(json.dumps(manifest,indent=2))
     writers={s:Writer(out/s,shard_size) for s in stores}
@@ -139,7 +145,7 @@ def export_dataset(data,encoded,out,seed=4266,shard_size=2048,shift_mode="circul
     expected=0 if originals_only else P
     if writers["train"].counts["synthetic_malicious"]!=expected or writers["train"].counts["synthetic_benign"]!=expected:
         raise AssertionError("Augmentation budget mismatch")
-    for split in ("validation","test"):
+    for split in splits[1:]:
         if any(k.startswith("synthetic") for k in writers[split].counts):raise AssertionError("Synthetic held-out example")
     for name in ("schema.json","scaler.json","frozen_bucket_encoder.pt"):
         if (encoded/name).exists():shutil.copy2(encoded/name,out/name)
@@ -165,4 +171,5 @@ if __name__=="__main__":
     p.add_argument("--shard-size",type=int,default=2048);p.add_argument("--originals-only",action="store_true")
     p.add_argument("--shift-mode",choices=["circular","none"],default="circular")
     p.add_argument("--donor-plan",type=Path,help="Reuse exact synthetic IDs and training donor pairs from another exported dataset")
-    args=p.parse_args();export_dataset(args.data,args.encoded,args.out,args.seed,args.shard_size,args.shift_mode,args.originals_only,args.donor_plan)
+    p.add_argument("--splits",nargs="+",choices=("train","validation","test"),default=["train","validation","test"])
+    args=p.parse_args();export_dataset(args.data,args.encoded,args.out,args.seed,args.shard_size,args.shift_mode,args.originals_only,args.donor_plan,args.splits)

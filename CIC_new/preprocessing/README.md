@@ -17,6 +17,12 @@ python -m CIC_new.preprocessing.run_preprocessing --csv datasets/NF-CICIDS2018-v
 These are alternative SQLite/CSV commands. The SQLite source requires the full
 CIC schema. This stage uses NumPy and pandas without importing PyTorch.
 
+For sequential sequence-duration/bucket-duration comparisons, use
+[`run_temporal_ablation.py`](../TEMPORAL_ABLATION.md). It defaults to these raw
+preparation stages and supports a later, separate full Scheme2 dataset export.
+Both single-run entry points accept `--sequence-seconds` and `--bucket-seconds`;
+their defaults remain 100 and 10.
+
 `sequence_index.py` constructs source-IP sequences; `bucket_statistics.py`
 aggregates 82 numeric features and raw category histograms into ten buckets.
 `split_policy.py` applies global time blocks, boundary exclusions and attack

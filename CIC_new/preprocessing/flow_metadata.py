@@ -11,13 +11,15 @@ def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def export_flow_metadata(prepared, dataset):
+def export_flow_metadata(prepared, dataset, splits=("validation", "test")):
     """Add sidecars without modifying existing shards, manifests or checkpoints."""
     prepared, dataset = Path(prepared), Path(dataset)
     connection = sqlite3.connect((prepared/"manifest.sqlite").resolve().as_uri()+"?mode=ro", uri=True)
     records = {}
     try:
-        for split in ("validation", "test"):
+        for split in splits:
+            if split not in ("validation", "test"):
+                raise ValueError("Flow metadata is for validation/test only")
             rows = connection.execute(
                 "SELECT sequence_id,flows,attack_flows FROM original_sequences WHERE split=? ORDER BY sequence_id",
                 (split,)).fetchall()

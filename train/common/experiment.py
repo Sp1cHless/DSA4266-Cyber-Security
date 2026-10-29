@@ -9,6 +9,7 @@ import numpy as np
 from .data import Scheme2, training_weights, check_disjoint
 from .io import ROOT, DEFAULT_DATASET, read_json, write_json, fresh, unique_name, environment, sha256
 from .metrics import POLICY, choose_thresholds, evaluate, save_curves
+from .temporal import input_transform as describe_transform, validate_start
 
 MODELS = ("xgboost", "lstm", "cnn", "hybrid")
 
@@ -28,6 +29,8 @@ def validate_arguments(args):
 
 
 def adapter(name):
+    if name == "lstm_bucket":
+        return importlib.import_module("train.lstm_bucket.runner")
     return importlib.import_module("train.xgboost.model" if name == "xgboost" else "train.common.torch_runner")
 
 
@@ -55,7 +58,8 @@ def score(name, model, split, device, threads):
 def load_model(name, config, folder, device, threads):
     engine = adapter(name)
     if name == "xgboost":
-        return engine.load(folder / "model.ubj", device, threads)
+        return engine.load(folder / "model.ubj", device, threads,
+                           config.get("input_transform", {}).get("start_bucket", 0))
     engine.setup(config["seed"], threads, device)
     return engine.load(name, config, folder / "model.pt", device)
 
@@ -80,27 +84,22 @@ def main(name, argv=None):
     else:
         parser.add_argument("--epochs", type=int)
         parser.add_argument("--batch-size", type=int)
-    if name == "lstm":
-        parser.add_argument("--circular-shift-start", type=int, choices=range(10),
-                            help="Original zero-based bucket to move to the front on every split; 0 keeps chronological order")
+    parser.add_argument("--circular-shift-start", type=int, choices=range(10),
+                        help="Original zero-based bucket to move to the front on every split; 0 keeps chronological order")
     args = parser.parse_args(argv)
     validate_arguments(args)
     config = read_json(args.config)
-    input_transform = {"name": "identity"}
-    if name == "lstm":
-        start = args.circular_shift_start
-        if start is None:
-            start = config["architecture"].get("circular_shift_start", 0)
-        if type(start) is not int or not 0 <= start < 10:
-            raise ValueError("circular_shift_start must be an integer from 0 to 9")
-        # Preserve the original baseline checkpoint/config format when start is zero.
-        if start or "circular_shift_start" in config["architecture"]:
-            config["architecture"]["circular_shift_start"] = start
-        if start:
-            input_transform = {"name": "circular_shift", "start_bucket": start,
-                               "bucket_order": list(range(start, 10)) + list(range(start)),
-                               "features_and_mask_together": True,
-                               "applies_to": "train_validation_and_frozen_evaluation"}
+    start = args.circular_shift_start
+    if start is None:
+        start = config["architecture"].get("circular_shift_start",
+                                           config.get("input_transform", {}).get("start_bucket", 0))
+    validate_start(start)
+    # Preserve old neural checkpoint structure and do not send a transform to XGBoost as a tree parameter.
+    if name == "xgboost":
+        config["architecture"].pop("circular_shift_start", None)
+    elif start or "circular_shift_start" in config["architecture"]:
+        config["architecture"]["circular_shift_start"] = start
+    input_transform = describe_transform(start)
     for key in ("patience", "epochs", "rounds", "batch_size"):
         value = getattr(args, key, None)
         if value is not None:
@@ -109,6 +108,8 @@ def main(name, argv=None):
         raise ValueError("All training settings must be positive")
     device = resolve_device(name, args.device)
     data = Scheme2(args.dataset, args.cache)
+    if start and data.timesteps != 10:
+        raise ValueError("Circular-shift experiments require the original ten-bucket grid")
     label = f"{name}_seed{args.seed}"
     if input_transform["name"] == "circular_shift":
         label += f"_circular_start{input_transform['start_bucket']}"

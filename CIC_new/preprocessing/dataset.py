@@ -57,9 +57,12 @@ class Originals(MappedArrays):
         if manifest.get("version")!=3 or not manifest.get("complete"):raise ValueError("Completed V3 data required")
         self.schema=read_json(self.data/"schema.json");self.meta=metadata(self.data,split)
         n=len(self.meta)
+        timesteps=self.schema["timesteps"]
         folder=self.data/"mmap"/split;identity=fingerprint(self.data)
-        shapes={"numeric":(n,10,82),"mask":(n,10),"y_bucket":(n,10),"flow_counts":(n,10),
-                **{"hist_"+f:(n,10,self.schema["category_slots"][f]) for f in FIELDS}}
+        numeric_width=len(self.schema["numeric_names"])
+        if numeric_width < 1:raise ValueError("Numeric feature schema is empty")
+        shapes={"numeric":(n,timesteps,numeric_width),"mask":(n,timesteps),"y_bucket":(n,timesteps),"flow_counts":(n,timesteps),
+                **{"hist_"+f:(n,timesteps,self.schema["category_slots"][f]) for f in FIELDS}}
         if not folder.exists():
             partial=folder.with_name(split+".partial")
             if partial.exists():raise FileExistsError(f"Interrupted/concurrent cache: {partial}; use a fresh data copy or inspect it")
@@ -107,6 +110,7 @@ class Pool:
 class Donors:
     def __init__(self,data,train_meta,seed=4266):
         self.meta=train_meta;self.rng=np.random.default_rng(seed)
+        self.timesteps=read_json(Path(data)/"schema.json")["timesteps"]
         self.benign=np.flatnonzero(train_meta["label"]==0);self.positive=np.flatnonzero(train_meta["label"]==1)
         if not len(self.benign) or not len(self.positive):raise ValueError("Both original training classes required")
         bg=defaultdict(lambda:defaultdict(list));atk=defaultdict(lambda:defaultdict(list))
@@ -135,7 +139,7 @@ class Donors:
                     a,_,band=self.bg.pick(self.rng,exclude=host)
                     # Consume the same RNG draw for a zero-shift control, so
                     # donor identities match when only rotation is changed.
-                    k=int(self.rng.integers(10));k=k if circular else 0;self.draw+=1
+                    k=int(self.rng.integers(self.timesteps));k=k if circular else 0;self.draw+=1
                     left.append(a);right.append(b);shift.append(k)
                     provenance.append(dict(synthetic=True,label=label,left_id=int(self.meta[a]["id"]),
                         right_id=int(self.meta[b]["id"]),left_ip=str(self.meta[a]["ip"]),right_ip=str(self.meta[b]["ip"]),

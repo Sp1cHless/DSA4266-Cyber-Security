@@ -19,41 +19,41 @@ POLICY = {"method": "global_15m_coverage_v2", "block_seconds": 900,
           "evaluation": "same environment, held-out global time blocks; campaigns may recur"}
 
 
-def interval_overlap(first, max_end, start, codes):
-    """Conservative closed flow envelope vs other folds' half-open 100s windows."""
+def interval_overlap(first, max_end, start, codes, window_ms=WINDOW_MS):
+    """Conservative closed flow envelope vs other folds' half-open windows."""
     result = np.zeros(len(start), bool)
     for code in range(3):
         members = np.flatnonzero(codes == code)
         other = np.unique(start[(codes < 3) & (codes != code)])
         if not len(other) or not len(members):
             continue
-        j = np.searchsorted(other, first[members]-WINDOW_MS, side="right")
+        j = np.searchsorted(other, first[members]-window_ms, side="right")
         valid = j < len(other)
         result[members[valid]] = other[j[valid]] <= max_end[members[valid]]
     return result
 
 
-def exclude_boundaries(start, first, max_end, codes, embargo_ms=EMBARGO_MS):
+def exclude_boundaries(start, first, max_end, codes, embargo_ms=EMBARGO_MS, window_ms=WINDOW_MS):
     times, inverse = np.unique(start, return_inverse=True)
     global_codes = np.empty(len(times), np.uint8)
     global_codes[inverse] = codes
     if not np.array_equal(global_codes[inverse], codes):
-        raise ValueError("One global 100s timestamp was assigned to multiple folds")
+        raise ValueError("One global sequence timestamp was assigned to multiple folds")
     boundaries = times[1:][global_codes[1:] != global_codes[:-1]]
-    support_end = np.maximum(start+WINDOW_MS, max_end+1)
+    support_end = np.maximum(start+window_ms, max_end+1)
     near = np.zeros(len(start), bool)
     if embargo_ms and len(boundaries):
         j = np.searchsorted(boundaries, start-embargo_ms, side="right")
         valid = j < len(boundaries)
         near[valid] = boundaries[j[valid]]-embargo_ms < support_end[valid]
-    crossing = interval_overlap(first, max_end, start, codes)
+    crossing = interval_overlap(first, max_end, start, codes, window_ms=window_ms)
     reasons = near.astype(np.uint8) | (crossing.astype(np.uint8) << 1)
     retained = codes.copy()
     retained[reasons != 0] = 3
     return retained, reasons, boundaries
 
 
-def split(start, first, max_end, source, attack_flows, cells, seed=4266):
+def split(start, first, max_end, source, attack_flows, cells, seed=4266, window_ms=WINDOW_MS):
     """Return kept/original fold codes, exclusion bits, groups and audit metadata.
 
     cells maps (zero-based sequence array index, attack name) to exact type count.
@@ -80,7 +80,7 @@ def split(start, first, max_end, source, attack_flows, cells, seed=4266):
     cut2 = int(np.argmin(np.abs(cumulative[cut1:-1]-.8*n)))+cut1+1
     assigned = np.empty(len(blocks), np.uint8)
     assigned[random_order[:cut1]], assigned[random_order[cut1:cut2]], assigned[random_order[cut2:]] = 0, 1, 2
-    initial, _, _ = exclude_boundaries(start, first, max_end, assigned[group_index])
+    initial, _, _ = exclude_boundaries(start, first, max_end, assigned[group_index], window_ms=window_ms)
     reserved = np.full(len(blocks), -1, np.int8)
     by_type = {}
     for (index, name), count in cells.items():
@@ -91,7 +91,7 @@ def split(start, first, max_end, source, attack_flows, cells, seed=4266):
     def footprint(index):
         if index not in footprints:
             lo = max(0, int(np.searchsorted(times, start[index]-EMBARGO_MS))-1)
-            end = max(int(start[index])+WINDOW_MS, int(max_end[index])+1)
+            end = max(int(start[index])+window_ms, int(max_end[index])+1)
             hi = int(np.searchsorted(times, end+EMBARGO_MS))
             footprints[index] = np.unique(time_groups[lo:hi])
         return footprints[index]
@@ -154,7 +154,7 @@ def split(start, first, max_end, source, attack_flows, cells, seed=4266):
             assigned[group] = code
             totals[code] += weights[group]
         original = assigned[group_index]
-        kept, reasons, boundaries = exclude_boundaries(start, first, max_end, original)
+        kept, reasons, boundaries = exclude_boundaries(start, first, max_end, original, window_ms=window_ms)
         return original, kept, reasons, boundaries
     ratios = np.array([.6, .2, .2])
     target = ratios*n
@@ -188,12 +188,12 @@ def split(start, first, max_end, source, attack_flows, cells, seed=4266):
         coverage.append(row)
     if any(not np.any(kept == code) for code in range(3)):
         raise ValueError("Coverage reservations and temporal purge leave an empty split; need more independent time blocks")
-    overlap = int(interval_overlap(first, max_end, start, kept).sum())
+    overlap = int(interval_overlap(first, max_end, start, kept, window_ms=window_ms).sum())
     if overlap:
-        raise AssertionError("Retained flow envelopes overlap another fold's 100s windows")
+        raise AssertionError("Retained flow envelopes overlap another fold's sequence windows")
     # Check source adjacency in source/time order, independently of input ordering.
     order = np.lexsort((start, source))
-    adjacent = (source[order[1:]] == source[order[:-1]]) & (np.diff(start[order]) == WINDOW_MS)
+    adjacent = (source[order[1:]] == source[order[:-1]]) & (np.diff(start[order]) == window_ms)
     crossing = adjacent & (kept[order[1:]] < 3) & (kept[order[:-1]] < 3) & (kept[order[1:]] != kept[order[:-1]])
     notes = {**POLICY, "seed": seed, "original_sequences": n, "observed_blocks": len(blocks),
              "assigned_blocks": {NAMES[c]: int(np.count_nonzero(assigned == c)) for c in range(3)},
@@ -203,7 +203,8 @@ def split(start, first, max_end, source, attack_flows, cells, seed=4266):
              "excluded_sequences": int(np.count_nonzero(kept == 3)),
              "excluded_positive_sequences": int(np.count_nonzero((kept == 3) & (attack_flows > 0))),
              "embargo_exclusions": int(np.count_nonzero(reasons & 1)), "interval_exclusions": int(np.count_nonzero(reasons & 2)),
-             "fold_transitions": len(boundaries), "shared_global_100s": 0,
+             "fold_transitions": len(boundaries), "shared_global_windows": 0,
+             "sequence_seconds": window_ms // 1000,
              "retained_balance_attempts": balance,
              "retained_interval_overlap_sequences": overlap, "adjacent_source_pairs_cross_split": int(crossing.sum()),
              "coverage": coverage, "unreserved_coverage_requests": missing_reservations,
@@ -212,4 +213,6 @@ def split(start, first, max_end, source, attack_flows, cells, seed=4266):
              "ratios_denominator": "original retained sequences, before augmentation; 60/20/20 is approximate after purge"}
     if np.any(crossing):
         raise AssertionError("Adjacent retained source windows cross sets")
+    if window_ms == WINDOW_MS:
+        notes["shared_global_100s"] = 0  # Preserve the established baseline audit field.
     return kept, original, reasons, blocks*BLOCK_MS, assigned, reserved, notes

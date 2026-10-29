@@ -63,6 +63,12 @@ class SchemeTwoPreparationTests(unittest.TestCase):
 
             hashes = {p.relative_to(out / "dataset").as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                       for p in (out / "dataset").rglob("*") if p.is_file()}
+            # Historical workflow settings did not record explicit temporal flags.
+            historical = read_json(out / "workflow.json")
+            historical["settings"].pop("sequence_seconds")
+            historical["settings"].pop("bucket_seconds")
+            historical["settings"].pop("splits")
+            (out / "workflow.json").write_text(json.dumps(historical), encoding="utf-8")
             resumed = run(command + ["--resume"])
             self.assertIn("reuse completed stage", resumed.stdout)
             self.assertEqual(hashes, {p.relative_to(out / "dataset").as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()

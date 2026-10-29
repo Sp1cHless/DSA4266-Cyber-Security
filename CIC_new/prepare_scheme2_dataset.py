@@ -26,6 +26,7 @@ from CIC_new.preprocessing.augmentation import Encoded
 from CIC_new.preprocessing.dataset import fingerprint
 from CIC_new.preprocessing.donor_plan import make_plan, original_catalog
 from CIC_new.preprocessing.sequence_index import signature, write_json, read_json
+from CIC_new.preprocessing.temporal import TemporalGrid
 
 
 def digest(path):
@@ -49,17 +50,22 @@ def completed(folder, marker, resume):
     return True
 
 
-def validate_export(dataset, encoded, donor_plan=None):
+def validate_export(dataset, encoded, donor_plan=None, splits=("train", "validation", "test")):
     """Check every output against frozen originals and the shared zero-shift plan."""
     dataset, encoded = map(Path, (dataset, encoded))
     manifest = read_json(dataset/"manifest.json")
+    splits = tuple(splits)
+    if splits not in (("train", "validation"), ("train", "validation", "test")):
+        raise ValueError("Validation requires train/validation or train/validation/test")
+    if set(manifest["counts"]) != set(splits):
+        raise ValueError("Exported splits differ from the requested validation scope")
     if donor_plan is not None and digest(dataset/"donor_plan.npz") != digest(donor_plan):
         raise ValueError("Export did not preserve the frozen donor plan")
     with np.load(dataset/"donor_plan.npz", allow_pickle=False) as archive:
         plan = {k: archive[k] for k in archive.files}
     planned_seen = np.zeros(len(plan["sample_id"]), bool)
     shards, checked = [], 0
-    for split in ("train", "validation", "test"):
+    for split in splits:
         store = Encoded(encoded, split)
         positives = int(store.meta["label"].sum())
         expected_counts = dict(real_benign=len(store.meta)-positives, real_malicious=positives)
@@ -74,7 +80,8 @@ def validate_export(dataset, encoded, donor_plan=None):
                 a = {k: archive[k] for k in archive.files}
             n = len(a["sample_id"])
             dimension = store.manifest["bucket_dim"]
-            if a["X"].shape != (n, 10, dimension+1) or a["X"].dtype != np.float32 or not np.isfinite(a["X"]).all():
+            timesteps=store.arrays["mask"].shape[1]
+            if manifest["timesteps"] != timesteps or a["X"].shape != (n, timesteps, dimension+1) or a["X"].dtype != np.float32 or not np.isfinite(a["X"]).all():
                 raise ValueError("Invalid exported feature tensor")
             if np.any(a["right_shift_buckets"]):
                 raise ValueError("Scheme2 requires zero displacement")
@@ -159,6 +166,7 @@ def build(args):
     from CIC_new.representation_learning.encode_sequences import encode
 
     source_before = signature(args.db.resolve())
+    grid = TemporalGrid(args.sequence_seconds, args.bucket_seconds)
     if args.out is None:
         parent = ROOT/"CIC_new/outputs/scheme2_runs"
         parent.mkdir(parents=True, exist_ok=True)
@@ -170,7 +178,9 @@ def build(args):
         if not args.resume or not (out/"workflow.json").is_file():
             raise FileExistsError(f"Fresh output required, or --resume for this completed-stage workflow: {out}")
         workflow = read_json(out/"workflow.json")
-        if workflow["settings"] != settings:
+        recorded_settings = {"sequence_seconds": 100, "bucket_seconds": 10,
+                             "splits": ["train", "validation", "test"], **workflow["settings"]}
+        if recorded_settings != settings:
             raise ValueError("Resume settings differ from the recorded workflow")
     else:
         out.mkdir(parents=True, exist_ok=True)
@@ -188,9 +198,13 @@ def build(args):
             if not read_json(data/"manifest.json").get("complete") or read_json(data/"manifest.json").get("version") != 3:
                 raise ValueError("--prepared must be completed V3 Scheme2 preparation")
         elif not completed(data, "manifest.json", args.resume):
-            prepare(data, db=args.db, seed=args.seed, shard_size=args.shard_size)
+            prepare(data, db=args.db, seed=args.seed, shard_size=args.shard_size,
+                    sequence_seconds=grid.sequence_seconds, bucket_seconds=grid.bucket_seconds)
         if read_json(data/"manifest.json")["source"] != source_before:
             raise ValueError("Prepared data belongs to another source database")
+        schema = read_json(data/"schema.json")
+        if any(schema.get(key) != value for key, value in grid.settings().items()):
+            raise ValueError("Prepared sequence/bucket settings differ from this workflow")
         # Preserve the established attack/host/activity sampling and seed offset.
         plan = out/"donor_plan.npz"
         expected_plan = make_plan(data, original_catalog(data), args.seed+1)
@@ -220,9 +234,9 @@ def build(args):
         workflow["stages"]["bucket_checkpoint_sha256"] = checkpoint_hash
         write_json(out/"workflow.json", workflow)
         encoded = out/"encoded_sequences"
-        print("[stage 3/5] Frozen encoding of real train/validation/test; no fitting on test", flush=True)
+        print(f"[stage 3/5] Frozen encoding of real {'/'.join(args.splits)}; no fitting on test", flush=True)
         if not completed(encoded, "manifest.json", args.resume):
-            encode(SimpleNamespace(**base, out=encoded, checkpoint=checkpoint, splits=["train", "validation", "test"]))
+            encode(SimpleNamespace(**base, out=encoded, checkpoint=checkpoint, splits=args.splits))
         if read_json(encoded/"manifest.json")["checkpoint_sha256"] != checkpoint_hash:
             raise ValueError("Encoded data belongs to another checkpoint")
         if read_json(encoded/"manifest.json")["data_fingerprint"] != fingerprint(data):
@@ -233,11 +247,11 @@ def build(args):
         print("[stage 4/5] Shared donor pairs, zero displacement, vector addition and L2", flush=True)
         if not completed(dataset, "manifest.json", args.resume):
             export_dataset(data, encoded, dataset, seed=args.seed, shard_size=args.shard_size,
-                           shift_mode="none", donor_plan=plan)
+                           shift_mode="none", donor_plan=plan, splits=args.splits)
         print("[stage 5/5] Check every exported example against frozen donors", flush=True)
-        report = validate_export(dataset, encoded, donor_plan=plan)
+        report = validate_export(dataset, encoded, donor_plan=plan, splits=args.splits)
         from CIC_new.preprocessing.flow_metadata import export_flow_metadata
-        export_flow_metadata(data, dataset)
+        export_flow_metadata(data, dataset, splits=[s for s in args.splits if s != "train"])
         if signature(args.db.resolve()) != source_before:
             raise ValueError("Raw source changed during preparation")
     except BaseException as error:
@@ -270,11 +284,21 @@ def main():
     p.add_argument("--val-limit", type=int, default=4096)
     p.add_argument("--category-dim", type=int, default=16)
     p.add_argument("--bucket-dim", type=int, default=64)
+    p.add_argument("--sequence-seconds", type=int, default=100)
+    p.add_argument("--bucket-seconds", type=int, default=10)
+    p.add_argument("--splits", nargs="+", choices=("train", "validation", "test"),
+                   default=["train", "validation", "test"])
     args = p.parse_args()
     if args.seed < 0 or any(getattr(args, k) <= 0 for k in ("cpu_threads", "shard_size", "batch_size", "embedding_steps", "validate_every", "val_limit", "category_dim", "bucket_dim")):
         p.error("Seed must be nonnegative and sizes/training budgets positive")
     if args.resume and args.out is None:
         p.error("--resume requires the previous --out")
+    try:
+        TemporalGrid(args.sequence_seconds, args.bucket_seconds)
+        if args.splits not in (["train", "validation"], ["train", "validation", "test"]):
+            raise ValueError("Use --splits train validation, optionally followed by test")
+    except ValueError as error:
+        p.error(str(error))
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stdout)
     print(f"Python: {sys.executable}", flush=True)
     try:

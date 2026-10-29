@@ -24,3 +24,25 @@ node_modules/
 /train/*/runs/
 /train/comparisons/
 /train/tests/artifacts/
+
+# Delivered training datasets may also be placed beside training entry points.
+/train/dataset*/
+
+# Generated arrays, learned weights, serialized models and source databases.
+*.npz
+*.npy
+*.pt
+*.pth
+*.ckpt
+*.ubj
+*.joblib
+*.onnx
+*.pkl
+*.pickle
+*.db
+*.sqlite
+*.sqlite3
+
+# Detailed local research maps contain machine-specific evidence inventories.
+# Share the compact conclusions in docs/RESEARCH_FINDINGS.md instead.
+/docs/research_map_*/

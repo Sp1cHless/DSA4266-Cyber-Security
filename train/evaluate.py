@@ -5,7 +5,8 @@ import sys
 import time
 
 if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    # Replace the script directory: train/xgboost must not shadow the installed library.
+    sys.path[0] = str(Path(__file__).resolve().parents[1])
 
 from train.common.data import Scheme2, check_disjoint
 from train.common.experiment import load_model, score, resolve_device, export_evaluation

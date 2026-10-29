@@ -13,6 +13,7 @@ separate flow-count channel. Default final input shape: `[N, 10, 65]`.
 | `CIC_new/tests/` | Small data-construction checks using artificial fixtures |
 | `datasets/` | Local source database and delivered final dataset; see its README |
 | `train/` | Current model training, comparison, evaluation and diagnostics |
+| `docs/RESEARCH_FINDINGS.md` | Compact research conclusions and selected numerical results |
 
 ## Use an existing dataset
 
@@ -50,6 +51,13 @@ under `_local_archive/`. That directory is ignored by Git. Its dated cleanup
 directory includes a move ledger and original copies of edited files.
 Source data, completed datasets, checkpoints and generated model results remain
 local. Existing completed results are preserved; new builds require fresh outputs.
+
+Dataset exports placed under `train/dataset*/` and generated arrays, weights and
+serialized models are also ignored. Detailed `docs/research_map_*/` evidence
+inventories remain local, preserving their original paths for research review.
+Share [the compact research findings](docs/RESEARCH_FINDINGS.md), source code,
+experiment guides and fixed configuration files. Full run directories, prediction
+arrays, data shards, caches and machine-specific cleanup records stay local.
 
 The same historical Scheme2 test split has already been inspected in project work.
 It is not a newly untouched holdout. Synthetic training examples reuse real

@@ -11,6 +11,7 @@ import numpy as np
 
 from . import bucket_statistics as bf
 from . import split_policy as sp
+from .temporal import DEFAULT_GRID
 
 SPLITS = ("train", "validation", "test")
 LOG = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ def connect(out, raw=None):
     return conn
 
 
-def index_source(out, db):
+def index_source(out, db, grid=DEFAULT_GRID):
     """Create the group manifest and a clustered, numeric read-only event cache."""
     conn = connect(out, db)
     try:
@@ -66,7 +67,7 @@ def index_source(out, db):
         if not controls[0] or controls[2]:
             raise ValueError(f"Input is empty or contains {controls[2]} invalid required rows")
         LOG.info("Input controls: %s flows, %s attack flows", f"{controls[0]:,}", f"{controls[1]:,}")
-        conn.executescript('''
+        conn.executescript(f'''
             CREATE TABLE original_sequences(
                 sequence_id INTEGER PRIMARY KEY, source_ip TEXT NOT NULL, window_start_ms INTEGER NOT NULL,
                 flows INTEGER NOT NULL, attack_flows INTEGER NOT NULL, active_buckets INTEGER NOT NULL,
@@ -74,15 +75,15 @@ def index_source(out, db):
                 primary_attack TEXT NOT NULL DEFAULT 'Benign',split TEXT,assigned_split TEXT,
                 exclusion_reason INTEGER NOT NULL DEFAULT 0,UNIQUE(source_ip,window_start_ms));
             INSERT INTO original_sequences(source_ip,window_start_ms,flows,attack_flows,active_buckets,first_ms,last_ms,max_end_ms)
-            SELECT ipv4_src_addr,(flow_start_milliseconds/100000)*100000,COUNT(*),SUM(label),
-                COUNT(DISTINCT flow_start_milliseconds/10000),MIN(flow_start_milliseconds),MAX(flow_start_milliseconds),MAX(flow_end_milliseconds)
+            SELECT ipv4_src_addr,(flow_start_milliseconds/{grid.window_ms})*{grid.window_ms},COUNT(*),SUM(label),
+                COUNT(DISTINCT flow_start_milliseconds/{grid.bucket_ms}),MIN(flow_start_milliseconds),MAX(flow_start_milliseconds),MAX(flow_end_milliseconds)
             FROM raw.network_flows NOT INDEXED GROUP BY 1,2 ORDER BY 1,2;
             CREATE TABLE sequence_attacks(sequence_id INTEGER NOT NULL,attack TEXT NOT NULL,flows INTEGER NOT NULL,
                 PRIMARY KEY(sequence_id,attack)) WITHOUT ROWID;
             INSERT INTO sequence_attacks
             SELECT s.sequence_id,r.attack,COUNT(*) FROM raw.network_flows AS r NOT INDEXED
             JOIN original_sequences s ON s.source_ip=r.ipv4_src_addr
-                AND s.window_start_ms=(r.flow_start_milliseconds/100000)*100000
+                AND s.window_start_ms=(r.flow_start_milliseconds/{grid.window_ms})*{grid.window_ms}
             WHERE r.label=1 GROUP BY s.sequence_id,r.attack;
             UPDATE original_sequences SET primary_attack=(SELECT a.attack FROM sequence_attacks a
                 WHERE a.sequence_id=original_sequences.sequence_id ORDER BY a.flows DESC,a.attack LIMIT 1)
@@ -95,7 +96,7 @@ def index_source(out, db):
         LOG.info("Building sorted event cache; the original database remains read-only")
         conn.execute(f'''CREATE TABLE work.events AS SELECT s.sequence_id,{','.join(selects)}
             FROM raw.network_flows AS r NOT INDEXED JOIN original_sequences s
-              ON s.source_ip=r.ipv4_src_addr AND s.window_start_ms=(r.flow_start_milliseconds/100000)*100000
+              ON s.source_ip=r.ipv4_src_addr AND s.window_start_ms=(r.flow_start_milliseconds/{grid.window_ms})*{grid.window_ms}
             JOIN destinations d ON d.address=r.ipv4_dst_addr
             ORDER BY s.sequence_id,r.flow_start_milliseconds,r.rowid''')
         conn.execute("CREATE INDEX work.events_sequence ON events(sequence_id)")
@@ -111,7 +112,7 @@ def index_source(out, db):
         conn.close()
 
 
-def split_originals(out, seed):
+def split_originals(out, seed, grid=DEFAULT_GRID):
     conn = connect(out)
     try:
         n = conn.execute("SELECT COUNT(*) FROM original_sequences").fetchone()[0]
@@ -129,7 +130,8 @@ def split_originals(out, seed):
                 raise AssertionError("Attack membership has no original sequence")
             cells[(index, attack)] = count
         kept, original, reasons, blocks, assigned, reserved, notes = sp.split(
-            data["start"], data["first"], data["end"], data["source"], data["attacks"], cells, seed)
+            data["start"], data["first"], data["end"], data["source"], data["attacks"], cells, seed,
+            window_ms=grid.window_ms)
         conn.executemany("UPDATE original_sequences SET split=?,assigned_split=?,exclusion_reason=? WHERE sequence_id=?",
                          ((sp.NAMES[int(kept[i])], sp.NAMES[int(original[i])], int(reasons[i]), int(sid)) for i,sid in enumerate(data["ids"])))
         conn.execute("DROP TABLE IF EXISTS split_groups")

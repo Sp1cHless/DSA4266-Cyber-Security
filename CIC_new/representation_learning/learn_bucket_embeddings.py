@@ -9,7 +9,8 @@ from .bucket_autoencoder import BucketAE, bucket_loss
 from .runtime import device_for, fresh, dump, config, arguments, validate_arguments
 
 def bucket_batch(store,positions,device):
-    x=torch.from_numpy(np.array(store.arrays["numeric"].reshape(-1,82)[positions],copy=True)).to(device)
+    width=store.arrays["numeric"].shape[-1]
+    x=torch.from_numpy(np.array(store.arrays["numeric"].reshape(-1,width)[positions],copy=True)).to(device)
     hist={f:torch.from_numpy(np.array(store.arrays["hist_"+f].reshape(-1,store.schema["category_slots"][f])[positions],copy=True)).to(device)
           for f in FIELDS}
     return x,hist
@@ -24,6 +25,9 @@ def train_bucket(args):
     if not len(train_positions) or not len(val_positions):raise ValueError("Empty bucket pool")
     if len(val_positions)>args.val_limit:val_positions=rng.choice(val_positions,args.val_limit,replace=False)
     model_args=dict(slots=train.schema["category_slots"],category_dim=args.category_dim,bucket_dim=args.bucket_dim)
+    numeric_width=len(train.schema["numeric_names"])
+    if numeric_width != len(val.schema["numeric_names"]):raise ValueError("Train/validation numeric schemas differ")
+    if numeric_width != 82:model_args["numeric_width"]=numeric_width
     model=BucketAE(**model_args).to(device)
     shutil.copy2(Path(args.data)/"schema.json",out/"schema.json")
     shutil.copy2(Path(args.data)/"scaler.json",out/"scaler.json")

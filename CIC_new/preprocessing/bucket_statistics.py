@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import numpy as np
+from .temporal import DEFAULT_GRID
 
 WINDOW_MS = 100_000
 BUCKET_MS = 10_000
@@ -46,10 +47,11 @@ assert len(EXTRA_NAMES) == 24
 NUMERIC_NAMES = BASE_NAMES + EXTRA_NAMES
 
 
-def make_schema(vocabulary):
+def make_schema(vocabulary, grid=DEFAULT_GRID):
     vocabulary = sorted(set(int(v) for v in vocabulary))
     names = NUMERIC_NAMES + [f"l7_code_{v}_ratio" for v in vocabulary] + ["l7_UNK_ratio"]
-    return {"version": 1, "window_seconds": 100, "bucket_seconds": 10, "buckets_per_sequence": 10,
+    return {"version": 1, "window_seconds": grid.sequence_seconds,
+            "bucket_seconds": grid.bucket_seconds, "buckets_per_sequence": grid.timesteps,
             "numeric_feature_count": 82, "l7_vocabulary": vocabulary, "l7_ratio_count": len(vocabulary)+1,
             "feature_names": names, "feature_count": len(names), "mask_separate": True,
             "model_width_with_mask": len(names)+1,
@@ -72,21 +74,24 @@ def diversity(values, denominator=None):
 
 
 def aggregate(events, schema):
-    """Aggregate local-time events into exactly ten buckets; return unscaled data."""
+    """Aggregate local-time events using schema geometry; return unscaled data."""
     if events.ndim != 2 or events.shape[1] != len(EVENT_COLUMNS) or not len(events):
         raise ValueError("Expected a nonempty event matrix with the registered column order")
     starts = events[:, E["flow_start_milliseconds"]]
-    if starts.min() < 0 or starts.max() >= WINDOW_MS:
-        raise ValueError("Flow start outside the local 100-second window")
+    window_ms = schema["window_seconds"] * 1000
+    bucket_ms = schema["bucket_seconds"] * 1000
+    buckets = schema["buckets_per_sequence"]
+    if starts.min() < 0 or starts.max() >= window_ms:
+        raise ValueError("Flow start outside the configured local sequence window")
     if not np.all(np.isin(events[:, E["label"]], [0, 1])):
         raise ValueError("Nonbinary flow label")
-    x = np.zeros((BUCKETS, schema["feature_count"]), dtype=np.float64)
-    mask = np.zeros(BUCKETS, dtype=np.uint8)
-    y = np.zeros(BUCKETS, dtype=np.uint8)
-    flow_counts = np.zeros(BUCKETS, dtype=np.int64)
-    attacks = np.zeros(BUCKETS, dtype=np.int64)
+    x = np.zeros((buckets, schema["feature_count"]), dtype=np.float64)
+    mask = np.zeros(buckets, dtype=np.uint8)
+    y = np.zeros(buckets, dtype=np.uint8)
+    flow_counts = np.zeros(buckets, dtype=np.int64)
+    attacks = np.zeros(buckets, dtype=np.int64)
     vocabulary_index = {int(v): 82+i for i, v in enumerate(schema["l7_vocabulary"])}
-    bucket_indices = starts // BUCKET_MS
+    bucket_indices = starts // bucket_ms
     for bucket in np.unique(bucket_indices):
         bucket = int(bucket)
         rows = events[bucket_indices == bucket]

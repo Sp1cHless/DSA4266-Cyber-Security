@@ -21,11 +21,12 @@ def encode(args):
     dimension=saved["model_args"]["bucket_dim"]
     for split in args.splits:
         original=Originals(args.data,split);n=len(original.meta)
+        timesteps=original.schema["timesteps"]
         folder=out/split;folder.mkdir()
-        embeddings=np.lib.format.open_memmap(folder/"embeddings.npy",mode="w+",dtype=np.float32,shape=(n,10,dimension))
-        mask=np.lib.format.open_memmap(folder/"mask.npy",mode="w+",dtype=np.float32,shape=(n,10))
-        labels=np.lib.format.open_memmap(folder/"y_bucket.npy",mode="w+",dtype=np.int64,shape=(n,10))
-        counts=np.lib.format.open_memmap(folder/"flow_counts.npy",mode="w+",dtype=np.int64,shape=(n,10))
+        embeddings=np.lib.format.open_memmap(folder/"embeddings.npy",mode="w+",dtype=np.float32,shape=(n,timesteps,dimension))
+        mask=np.lib.format.open_memmap(folder/"mask.npy",mode="w+",dtype=np.float32,shape=(n,timesteps))
+        labels=np.lib.format.open_memmap(folder/"y_bucket.npy",mode="w+",dtype=np.int64,shape=(n,timesteps))
+        counts=np.lib.format.open_memmap(folder/"flow_counts.npy",mode="w+",dtype=np.int64,shape=(n,timesteps))
         np.save(folder/"metadata.npy",original.meta)
         for start in range(0,n,args.batch_size):
             end=min(start+args.batch_size,n);a=original.take(slice(start,end))
@@ -36,11 +37,13 @@ def encode(args):
             embeddings[start:end]=z.cpu().numpy();mask[start:end]=a["mask"]
             labels[start:end]=a["y_bucket"];counts[start:end]=a["flow_counts"]
             if start%10000<args.batch_size:print(f"[encode {split}] {end:,}/{n:,}",flush=True)
-        for a in (embeddings,mask,labels,counts):a.flush()
+        for a in (embeddings,mask,labels,counts):a.flush();a._mmap.close()
+        original.close()
     shutil.copy2(args.data/"scaler.json",out/"scaler.json")
     shutil.copy2(args.data/"schema.json",out/"schema.json")
     shutil.copy2(args.checkpoint,out/"frozen_bucket_encoder.pt")
     dump(out/"manifest.json",dict(complete=True,version=3,splits=args.splits,bucket_dim=dimension,
+             timesteps=timesteps,
              data_fingerprint=fingerprint(args.data),checkpoint_sha256=checkpoint_hash,
              frozen=True,real_originals_only=True))
 

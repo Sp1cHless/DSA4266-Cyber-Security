@@ -1,0 +1,4 @@
+--extra-index-url https://download.pytorch.org/whl/cu124
+numpy==2.4.6
+scikit-learn==1.9.1
+torch==2.6.0+cu124

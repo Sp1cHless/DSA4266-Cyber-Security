@@ -1,0 +1,8 @@
+{
+  "cases": [
+    {"sequence_seconds": 200, "bucket_seconds": 10},
+    {"sequence_seconds": 200, "bucket_seconds": 20},
+    {"sequence_seconds": 400, "bucket_seconds": 10},
+    {"sequence_seconds": 400, "bucket_seconds": 40}
+  ]
+}

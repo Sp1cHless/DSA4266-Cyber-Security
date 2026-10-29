@@ -24,7 +24,16 @@ the architecture and optimization settings. Runs go to a fresh `runs/` directory
 under this folder. See [the shared guide](../README.md) for installation, weighting,
 metrics, output files, all-model comparison and frozen evaluation.
 
+For the main-baseline comparison against four new sequence/bucket settings, use
+[`run_temporal_lstm.py`](../TEMPORAL_LSTM.md). It reuses completed preparations,
+retains this LSTM's archived training settings, and highlights Infilteration and
+Brute Force Web validation recall at 1% and 0.1% FPR without scoring test.
+
 ## Fixed circular-shift experiment
+
+The same operation is supported for all four families. See the
+[four-model paired batch guide](../CIRCULAR_SHIFT.md) to run eight matched fits
+and produce AP, low-FPR recall and per-attack delta tables automatically.
 
 To test sensitivity to the sequence start/end boundary, retrain the same LSTM
 with a fixed rotation of all ten buckets. The start index is **zero-based**:

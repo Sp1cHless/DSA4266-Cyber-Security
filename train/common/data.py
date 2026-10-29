@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from .io import read_json, write_json, sha256, ROOT
+from .temporal import validate_start
 
 GROUPS = ("real_benign", "real_malicious", "synthetic_benign", "synthetic_malicious")
 CACHE_VERSION = 1
@@ -17,8 +18,10 @@ class Scheme2:
         m = self.manifest
         if not m.get("complete") or m.get("representation") != "scheme2":
             raise ValueError("A completed Scheme2 dataset is required")
-        if (m.get("timesteps"), m.get("feature_width")) != (10, 65):
-            raise ValueError("Expected Scheme2 inputs [N,10,65]")
+        self.timesteps = m.get("timesteps")
+        if (type(self.timesteps) is not int or not 1 <= self.timesteps <= 127
+                or m.get("feature_width") != 65):
+            raise ValueError("Expected Scheme2 inputs [N,T,65] with 1 <= T <= 127")
         if not read_json(self.path / "validation.json").get("passed"):
             raise ValueError("Dataset construction validation did not pass")
         self.identity = sha256(self.path / "manifest.json")
@@ -45,7 +48,7 @@ class Scheme2:
             folder.mkdir(parents=True, exist_ok=False)
             print(f"Preparing {split} cache from {len(files)} verified shards...", flush=True)
             n = self.manifest["total_samples"][split]
-            specs = {"x": (np.float32, (n, 10, 65)), "mask": (np.float32, (n, 10)),
+            specs = {"x": (np.float32, (n, self.timesteps, 65)), "mask": (np.float32, (n, self.timesteps)),
                      "y": (np.int64, (n,)), "ids": (np.int64, (n,)), "types": ("U24", (n,)),
                      "attack": ("U80", (n,)), "host": ("U64", (n,)), "flows": (np.int64, (n,))}
             arrays = {k: np.lib.format.open_memmap(folder / f"{k}.npy", mode="w+", dtype=d, shape=s)
@@ -60,7 +63,7 @@ class Scheme2:
                     if size != record["count"] or offset + size > n:
                         raise ValueError("Shard row count mismatch")
                     x, mask, y = a["X"], a["mask"], a["y_sequence"]
-                    if x.shape != (size, 10, 65) or mask.shape != (size, 10):
+                    if x.shape != (size, self.timesteps, 65) or mask.shape != (size, self.timesteps):
                         raise ValueError("Invalid input shape")
                     if not np.isfinite(x).all() or not np.isin(mask, (0, 1)).all():
                         raise ValueError("Nonfinite input or invalid mask")
@@ -129,9 +132,22 @@ def training_weights(split):
     return weights
 
 
-def flat_inputs(split):
+def flat_inputs(split, circular_shift_start=0):
     # Fixed temporal positions are preserved; mask is explicit, not a learned feature.
-    return np.concatenate((split["x"].reshape(len(split), -1), split["mask"]), axis=1)
+    start = validate_start(circular_shift_start)
+    x, mask = split["x"], split["mask"]
+    if start == 0:
+        return np.concatenate((x.reshape(len(split), -1), mask), axis=1)
+    if x.shape[1] != 10:
+        raise ValueError("The circular-shift experiment requires the original ten-bucket grid")
+    # Fill the final matrix one bucket at a time, avoiding an extra full-data roll.
+    width = x.shape[2]
+    result = np.empty((len(split), 10 * width + 10), dtype=x.dtype)
+    for destination in range(10):
+        source = (destination + start) % 10
+        result[:, destination * width:(destination + 1) * width] = x[:, source, :]
+        result[:, 10 * width + destination] = mask[:, source]
+    return result
 
 
 def check_disjoint(a, b):
