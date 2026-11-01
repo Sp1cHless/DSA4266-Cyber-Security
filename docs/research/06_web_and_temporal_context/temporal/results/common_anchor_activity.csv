@@ -1,0 +1,7 @@
+attack_type,window_seconds,bucket_seconds,anchors,median_active_buckets,median_flows
+Infilteration,100,10,235,3.0,8.0
+Infilteration,200,10,235,5.0,24.0
+Infilteration,400,10,235,8.0,55.0
+Brute_Force_-Web,100,10,143,1.0,2.0
+Brute_Force_-Web,200,10,143,2.0,2.0
+Brute_Force_-Web,400,10,143,3.0,5.0

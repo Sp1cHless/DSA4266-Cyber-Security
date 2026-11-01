@@ -1,0 +1,15 @@
+attack_type,raw_attack_flows,source_addresses,destination_addresses,nonempty_100s_windows,natural_hybrid_windows_100s,hybrid_share_of_type_windows
+DDOS_attack-HOIC,1032311,10,1,340,0,0.0
+FTP-BruteForce,386720,1,1,59,0,0.0
+DDoS_attacks-LOIC-HTTP,288589,10,1,471,0,0.0
+Bot,207703,8,1,1387,138,0.09949531362653208
+SSH-Bruteforce,188474,1,1,56,0,0.0
+Infilteration,188152,609,1383,6634,4562,0.6876695809466385
+DoS_attacks-SlowHTTPTest,105550,1,1,33,0,0.0
+DoS_attacks-Hulk,100076,1,1,9,0,0.0
+DoS_attacks-GoldenEye,61300,1,1,14,0,0.0
+DoS_attacks-Slowloris,36040,1,1,25,0,0.0
+DDOS_attack-LOIC-UDP,3450,10,1,188,0,0.0
+Brute_Force_-Web,1618,561,1,1295,490,0.3783783783783784
+Brute_Force_-XSS,480,4,2,442,20,0.04524886877828054
+SQL_Injection,440,4,1,388,0,0.0

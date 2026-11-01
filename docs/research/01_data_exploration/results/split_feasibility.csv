@@ -1,0 +1,9 @@
+candidate,train_attack_types,validation_attack_types,test_attack_types,cross_set_candidate_episodes_300s,excluded_sequences
+random_100s,14,14,14,18,0
+chronological,12,1,2,1,2208
+day_chronological,12,1,2,0,376
+day_shuffled,9,2,4,0,185
+blocks_15m,13,11,8,11,219861
+blocks_30m,12,10,10,12,118965
+blocks_60m,12,9,6,10,55842
+guarded_30m,12,2,2,0,49225

@@ -1,0 +1,103 @@
+{
+  "scope": "Replot completed summaries only; no fitting or prediction rescoring",
+  "inputs": [
+    {
+      "path": "docs\\RESEARCH_FINDINGS.md",
+      "sha256": "536213514bde765552987494b5a4fe9f1f8def07c5bc2c7b96db25697318855c"
+    },
+    {
+      "path": "train\\runs\\20261025_221955_112858_lstm_bucket_supervision_seed4266_b1f2de\\attack_comparison.csv",
+      "sha256": "68784099a474c7b68df530f0bfd814715ae45cab1993a39e583f4c7049b8b040"
+    },
+    {
+      "path": "train\\runs\\20261025_221955_112858_lstm_bucket_supervision_seed4266_b1f2de\\bucket_supervised\\bucket_metrics.json",
+      "sha256": "160062bb0187665f2aef362a3a1c4deb9c91f9a10fddb28a9946d0d71dd77820"
+    },
+    {
+      "path": "train\\runs\\20261025_221955_112858_lstm_bucket_supervision_seed4266_b1f2de\\comparison.json",
+      "sha256": "f9fa3902eb3d137c684b3a94de63aac63a3275b354e97033cf1423613c01e08b"
+    }
+  ],
+  "localization": {
+    "n": 135,
+    "hits": 116,
+    "uniform_expected_percent": 54.4,
+    "source": "Previously recorded project findings"
+  },
+  "bucket_ap": 0.8287752361808808,
+  "sequence_seed": 4266,
+  "sequence_changes": [
+    {
+      "attack": "Infilteration",
+      "operating_point": "validation_fpr_1pct",
+      "n": "366",
+      "hosts": "43",
+      "tp": "271",
+      "fn": "95",
+      "recall": "0.7404371584699454",
+      "threshold": "0.9398890137672424",
+      "global_fpr": "0.009958877668056032",
+      "baseline_tp": "267",
+      "baseline_fn": "99",
+      "baseline_recall": "0.7295081967213115",
+      "baseline_global_fpr": "0.00996287400740925",
+      "recovered": "11",
+      "lost": "7",
+      "delta_recall_pp": "1.0928961748633892"
+    },
+    {
+      "attack": "Infilteration",
+      "operating_point": "validation_fpr_0.1pct",
+      "n": "366",
+      "hosts": "43",
+      "tp": "132",
+      "fn": "234",
+      "recall": "0.36065573770491804",
+      "threshold": "0.9900109171867371",
+      "global_fpr": "0.0009351434086376509",
+      "baseline_tp": "134",
+      "baseline_fn": "232",
+      "baseline_recall": "0.366120218579235",
+      "baseline_global_fpr": "0.0009711104628160605",
+      "recovered": "7",
+      "lost": "9",
+      "delta_recall_pp": "-0.5464480874316946"
+    },
+    {
+      "attack": "Brute_Force_-Web",
+      "operating_point": "validation_fpr_1pct",
+      "n": "181",
+      "hosts": "105",
+      "tp": "48",
+      "fn": "133",
+      "recall": "0.26519337016574585",
+      "threshold": "0.9398890137672424",
+      "global_fpr": "0.009958877668056032",
+      "baseline_tp": "47",
+      "baseline_fn": "134",
+      "baseline_recall": "0.2596685082872928",
+      "baseline_global_fpr": "0.00996287400740925",
+      "recovered": "12",
+      "lost": "11",
+      "delta_recall_pp": "0.5524861878453025"
+    },
+    {
+      "attack": "Brute_Force_-Web",
+      "operating_point": "validation_fpr_0.1pct",
+      "n": "181",
+      "hosts": "105",
+      "tp": "7",
+      "fn": "174",
+      "recall": "0.03867403314917127",
+      "threshold": "0.9900109171867371",
+      "global_fpr": "0.0009351434086376509",
+      "baseline_tp": "7",
+      "baseline_fn": "174",
+      "baseline_recall": "0.03867403314917127",
+      "baseline_global_fpr": "0.0009711104628160605",
+      "recovered": "3",
+      "lost": "3",
+      "delta_recall_pp": "0.0"
+    }
+  ]
+}

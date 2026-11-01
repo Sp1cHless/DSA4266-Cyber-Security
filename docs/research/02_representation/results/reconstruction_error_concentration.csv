@@ -1,0 +1,5 @@
+representation,top_fraction,sequences,validation_sequences,share_of_own_total_reconstruction_error
+Scheme 1,0.001,252,251146,0.416643536467507
+Scheme 1 + L2,0.001,252,251146,0.00799853236871753
+Scheme 1,0.01,2512,251146,0.4596405433816364
+Scheme 1 + L2,0.01,2512,251146,0.05242721330173203

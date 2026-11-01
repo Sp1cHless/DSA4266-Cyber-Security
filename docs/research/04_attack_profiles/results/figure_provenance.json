@@ -1,0 +1,100 @@
+{
+  "operation": "Layout of direct TensorFlow Embedding Projector screenshots; no regenerated scatter plot or new fitting",
+  "url": "https://projector.tensorflow.org/",
+  "model": "Historical original-order baseline LSTM, seed 4266",
+  "representation": "64D ReLU vector entering the final binary linear layer; dropout disabled",
+  "cohort": {
+    "total": 4917,
+    "attack": 917,
+    "sampled_benign": 4000,
+    "split": "real validation"
+  },
+  "settings": {
+    "projection": "PCA components 1 and 2",
+    "sphereize": true,
+    "z_enabled": false,
+    "reported_variance_percent": 67.8,
+    "label_by": "label",
+    "color_by": "No color map",
+    "search_by": "primary_attack",
+    "selections": [
+      "Infilteration",
+      "Brute_Force_-Web",
+      "^(DDOS_attack|DDoS_attacks)"
+    ],
+    "ddos_regex_enabled": true,
+    "camera": "Same projection/camera; only search selection changes between the three screenshots"
+  },
+  "layout": {
+    "same_crop_for_all_panels": {
+      "left": 350,
+      "right": 705,
+      "top": 250,
+      "bottom": 560
+    },
+    "pixels": "Screenshots are embedded unchanged; only surrounding website controls are outside the displayed axes"
+  },
+  "neighbor_statistic": "Saved diagnostic: full native 64D row-L2-normalized vectors; ten neighbors excluding self in the fixed attack-enriched 4917-row cohort. This normalization is distinct from the website's display preprocessing.",
+  "scope": "Historical one-seed selected validation representation; descriptive distribution analysis, separate from five-seed detector means and reserved source-dependence audit",
+  "screenshots": [
+    {
+      "path": "projector_infilteration_full.jpg",
+      "sha256": "efe99a20f3819e6dc0ab4bef503ed5c007585efb78c345a4fb1ec03bd6b7b30c",
+      "selection": "infilteration",
+      "original_size": [
+        1019,
+        705
+      ]
+    },
+    {
+      "path": "projector_web_full.jpg",
+      "sha256": "cbfc0e2917428cb91af6829bd76b4dfdb919b498b1284b438d5f14d8e1b746ef",
+      "selection": "web",
+      "original_size": [
+        1019,
+        705
+      ]
+    },
+    {
+      "path": "projector_ddos_full.jpg",
+      "sha256": "0f00d1970c4662cdb327c00b21c87c3e8fc54a02f0878732c8c12d23d525ee3b",
+      "selection": "ddos",
+      "original_size": [
+        1019,
+        705
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "name": "baseline_vectors",
+      "path": "train/runs/20261024_104026_976396_projector_four_models_validation_ce128b/lstm/vectors.tsv",
+      "sha256": "af753782fc9a5a03bca2e437c9b33f8ca536e89dabd4b2ac7f0f0139aa53116e"
+    },
+    {
+      "name": "baseline_metadata",
+      "path": "train/runs/20261024_104026_976396_projector_four_models_validation_ce128b/lstm/metadata.tsv",
+      "sha256": "204379705a9594ffea322407f221bc8f2c1f6c40e0e6af6c6c85dfa3af6f97d4"
+    },
+    {
+      "name": "projector_settings",
+      "path": "train/runs/20261024_104026_976396_projector_four_models_validation_ce128b/PROJECTOR_VIEWS.md",
+      "sha256": "ea510f8c13ddf0543597d007f05e8ddb1f162a524ecbfe9ec2579d8972e8c304"
+    },
+    {
+      "name": "native_geometry_profiles",
+      "path": "train/runs/20261024_114328_990393_lstm_attack_overlap_diagnostics_219c9c/attack_profiles.csv",
+      "sha256": "5ffef05791e07210c968a7e0bfc20631126797187024165795931f7f748e885a"
+    },
+    {
+      "name": "diagnostic_report",
+      "path": "train/runs/20261024_114328_990393_lstm_attack_overlap_diagnostics_219c9c/DIAGNOSTICS.md",
+      "sha256": "cc509d4b0da9a7837eac2cbce3f02c0e6bd223ce006560184135ca166ba40f7b"
+    },
+    {
+      "name": "equal_sample_resampling",
+      "path": "train/runs/20261024_114328_990393_lstm_attack_overlap_diagnostics_219c9c/equal_n50_resampling.csv",
+      "sha256": "25bd07bbecdfab6ff8ba167badbcec20aa2a85a1168c28b6a12bed9abd491598"
+    }
+  ]
+}

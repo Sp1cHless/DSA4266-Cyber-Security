@@ -46,3 +46,13 @@ node_modules/
 # Detailed local research maps contain machine-specific evidence inventories.
 # Share the compact conclusions in docs/RESEARCH_FINDINGS.md instead.
 /docs/research_map_*/
+
+# Report rendering, intermediate document copies and local QA artifacts.
+/output/
+
+# Historical insertion drafts, original screenshots and plotting workspaces.
+# Share only the curated research README files, results, provenance and figures.
+/docs/research/**/local/
+
+# The research-tree PDF and SVG are shared; the duplicate raster is local.
+/docs/research/overview/*.png

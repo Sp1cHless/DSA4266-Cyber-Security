@@ -14,6 +14,14 @@ separate flow-count channel. Default final input shape: `[N, 10, 65]`.
 | `datasets/` | Local source database and delivered final dataset; see its README |
 | `train/` | Current model training, comparison, evaluation and diagnostics |
 | `docs/RESEARCH_FINDINGS.md` | Compact research conclusions and selected numerical results |
+| `docs/GROUP REPORT.docx` | Current Word report draft |
+| `docs/research/` | Report-aligned research branches, selected figures, compact results and evidence sources |
+| `docs/code/` | Complete source/configuration classification, dependency inventory and implementation navigation |
+
+For research presentation, start with [the research index](docs/research/README.md).
+Each study connects its finding and report section to the relevant figures,
+results and existing code entry points. The runtime source layout stays stable.
+For implementation details, use [the code structure guide](docs/code/README.md).
 
 ## Use an existing dataset
 
@@ -58,6 +66,13 @@ inventories remain local, preserving their original paths for research review.
 Share [the compact research findings](docs/RESEARCH_FINDINGS.md), source code,
 experiment guides and fixed configuration files. Full run directories, prediction
 arrays, data shards, caches and machine-specific cleanup records stay local.
+
+The curated `docs/research/` folders are shareable. Their `local/` subdirectories
+retain historical insertion drafts, original screenshots, plotting workspaces
+and superseded displays and are ignored. `output/` contains local document
+copies and rendering/QA artifacts and is also ignored. The research-tree PDF
+and SVG live together under `docs/research/overview/`; its duplicate PNG stays
+local. See [the document guide](docs/README.md) for the current report entry point.
 
 The same historical Scheme2 test split has already been inspected in project work.
 It is not a newly untouched holdout. Synthetic training examples reuse real

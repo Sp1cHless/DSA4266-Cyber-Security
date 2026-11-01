@@ -1,0 +1,78 @@
+{
+  "operation": "Unchanged screenshot-pixel layout with explicitly marked guide ellipses; no regenerated scatter plots or model fitting",
+  "website": "https://projector.tensorflow.org/",
+  "sources": [
+    {
+      "path": "docs\\report_additions\\holdout_transfer_20261029\\projector_set_a_control_full.png",
+      "sha256": "f832550037bc79069df53d6a29593378a71d806c106b7258cbec7ee1844a56d1"
+    },
+    {
+      "path": "docs\\report_additions\\holdout_transfer_20261029\\projector_set_a_holdout_full.png",
+      "sha256": "7537417881a93fe67cb644a7b69ca8def32b2fbd23ebb5efb7db45da0aa2e8f3"
+    },
+    {
+      "path": "train\\runs\\20261029_192411_050197_all_flooding_test_projector_699e44\\projector_flooding_selected.png",
+      "sha256": "a33b8526fe10e8e34b9752f662dc57199b54d6a22f5abf5b9d540847ab587869"
+    },
+    {
+      "path": "train\\runs\\20261029_192945_155514_flooding_full_training_neighbors_56c0cf\\projector_loic_http_fn.png",
+      "sha256": "ddfb9c36f180433ae9650a27da80d80877d713f5b32465ff4070173090237549"
+    }
+  ],
+  "set_A": {
+    "rows": 4917,
+    "dimensions": 64,
+    "selected": 237,
+    "sphereize": false,
+    "z": false,
+    "projection": [
+      1,
+      2
+    ],
+    "variance_percent": [
+      78.4,
+      79.3
+    ],
+    "crop": [
+      330,
+      150,
+      975,
+      685
+    ],
+    "selection": "^(DDOS_attack|DDoS_attacks|DoS_attacks)",
+    "guide_ellipses_full_screenshot_centers": [
+      [
+        887,
+        374
+      ],
+      [
+        884,
+        334
+      ]
+    ]
+  },
+  "flooding": {
+    "selected": [
+      202,
+      50
+    ],
+    "sphereize": false,
+    "crops": [
+      [
+        185,
+        240,
+        582,
+        610
+      ],
+      [
+        185,
+        235,
+        582,
+        610
+      ]
+    ],
+    "scope": "One-seed test-to-training geometry; distinct from committed three-seed outcomes"
+  },
+  "quantitative_team_source": "docs/research_map_20261029/team_snapshot/HOLDOUT_PROTOCOL.md",
+  "quantitative_team_source_sha256": "b15400d592ab8737b105d690f49e7a6e8d07289ad4be8f9d98eee0d2c7f45b52"
+}

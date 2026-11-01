@@ -1,0 +1,12 @@
+{
+  "raw_flows": 20115529,
+  "raw_attack_flows": 2600903,
+  "raw_attack_flow_share": 0.12929826503692743,
+  "original_100s_windows": 1466665,
+  "original_100s_positive_windows": 10918,
+  "single_active_bucket_share_100s": 0.5195099085339869,
+  "same_bucket_hybrid_share_100s": 0.818042226487524,
+  "infilteration_share_of_hybrid_windows_100s": 0.8756238003838771,
+  "candidate_episodes_300s": 22,
+  "single_episode_types_300s": 11
+}

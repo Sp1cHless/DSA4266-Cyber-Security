@@ -1,0 +1,6 @@
+primary_attack,validation_n,mean_benign_fraction_among_10_unit_64d_neighbors,historical_recall_at_global_1pct_fpr
+Brute_Force_-Web,181,0.20718232044198895,0.47513812154696133
+Infilteration,366,0.2480874316939891,0.6939890710382514
+DDOS_attack-HOIC,94,0.0,1.0
+DDOS_attack-LOIC-UDP,54,0.0,1.0
+DDoS_attacks-LOIC-HTTP,64,0.0,1.0

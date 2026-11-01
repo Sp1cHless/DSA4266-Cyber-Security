@@ -1,0 +1,5 @@
+Variant,AP (%),Infilteration recall (%),Web recall (%)
+Same-runtime reference,61.53,72.95 / 36.61,25.97 / 3.87
+Attention pooling,61.87,70.49 / 35.79,29.28 / 2.21
+Distribution statistics,61.50,70.77 / 31.69,36.46 / 6.08
+Bucket supervision,61.64,74.04 / 36.07,26.52 / 3.87

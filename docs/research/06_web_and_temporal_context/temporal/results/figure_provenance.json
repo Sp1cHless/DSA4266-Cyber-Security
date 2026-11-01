@@ -1,0 +1,34 @@
+{
+  "operation": "Replot saved CSV summaries only; no new model training or test evaluation",
+  "context_scope": "Fixed same-split eligible anchors, window endpoints unchanged, raw-flow availability; not predictions for expanded anchors",
+  "detector_scope": "Four new single-seed LSTM geometry fits on rebuilt real validation cohorts; historical 100/10 reference uses a different runtime; duration comparisons are descriptive",
+  "selection": "Run-specific validation AP checkpoints and global 1%/0.1% FPR thresholds; no attack-specific thresholds",
+  "sources": [
+    {
+      "name": "common_anchor_context",
+      "path": "train/runs/20261024_124830_784309_window_context_availability_0ce90b/paired_summary.csv",
+      "sha256": "d0a62c39e2ac1dbc0c09e7b8de0faf8a7cfa8bd83c92f7ffe47bba25d17c163c"
+    },
+    {
+      "name": "web_context_subgroups",
+      "path": "train/runs/20261025_013446_294043_web_temporal_support_diagnostic_7c620b/past_context_comparison.csv",
+      "sha256": "94d29ae879222e80875a58b1082f5567fac8a9ca606cfbcbf22aaa2c45375c05"
+    },
+    {
+      "name": "temporal_validation",
+      "path": "train/runs/20261025_100701_778931_lstm_temporal_seed4266_d278c9/validation_comparison.csv",
+      "sha256": "766f1a7d8a0e9b91222211866a8975e2ad2e0aae16c3f7644f66324f0dbf97a5"
+    },
+    {
+      "name": "temporal_attack_results",
+      "path": "train/runs/20261025_100701_778931_lstm_temporal_seed4266_d278c9/attack_comparison.csv",
+      "sha256": "34f4330014c6b1c34f306b370ece2f3e54c5fe018c67cc561f541f554ff3b157"
+    },
+    {
+      "name": "temporal_protocol",
+      "path": "train/TEMPORAL_LSTM.md",
+      "sha256": "fd2179e76eeb1f6d1fac544988c5bcb187e1e4daf66e3ad1a647aefd62c8569c"
+    }
+  ],
+  "matplotlib_version": "3.11.2"
+}

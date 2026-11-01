@@ -1,0 +1,82 @@
+{
+  "operation": "Extract no-shift baseline metrics and preserve uploaded Projector screenshots; no new experiment or image editing",
+  "population": "Fixed real validation cohort: 251146 sequences, including 917 attacks",
+  "seeds": [
+    4266,
+    4267,
+    4268,
+    4269,
+    4270
+  ],
+  "sd": "Sample SD across training seeds conditional on the same cohort; ddof=1",
+  "columns": "No-shift baseline_mean/baseline_sd and paired shifted-minus-baseline delta_mean/delta_sd; both precede the working-baseline decision",
+  "sources": [
+    {
+      "name": "five_seed_aggregate",
+      "path": "train/runs/20261024_223102_671768_circular_multiseed_start5_ef34ba/reports/20261025_003115_565779_paired_multiseed_comparison_f43f00/aggregate.csv",
+      "sha256": "8c17889d9485b4a1ce83c3825db9802f2436b7879b44c9b671e81993d457180b"
+    },
+    {
+      "name": "five_seed_attack_aggregate",
+      "path": "train/runs/20261024_223102_671768_circular_multiseed_start5_ef34ba/reports/20261025_003115_565779_paired_multiseed_comparison_f43f00/per_attack_aggregate.csv",
+      "sha256": "ae8ce780a2abcdc8ba69e22d91fef7594afcdc592e8e5d64f4352f82f11674ec"
+    },
+    {
+      "name": "historical_projector_views",
+      "path": "train/runs/20261024_104026_976396_projector_four_models_validation_ce128b/PROJECTOR_VIEWS.md",
+      "sha256": "ea510f8c13ddf0543597d007f05e8ddb1f162a524ecbfe9ec2579d8972e8c304"
+    },
+    {
+      "name": "matched_subtype_holdout_geometry",
+      "path": "train/runs/20261026_holdout_lstm_projector_comparison/README.md",
+      "sha256": "90c6d39c2b5fd2a0d040be7739b8645433dc1fcd5c327f52a2a8c7cb456ea7a0"
+    },
+    {
+      "name": "new_flooding_geometry",
+      "path": "train/runs/20261029_192945_155514_flooding_full_training_neighbors_56c0cf/FINDINGS.md",
+      "sha256": "622667ec2aaab9789852b8678b223571c1861ed8be170dc1cc9baf1a03468084"
+    }
+  ],
+  "user_screenshots": [
+    {
+      "name": "infilteration",
+      "source": "D:\\Screenshot 2026-10-24 113456.png",
+      "preserved_path": "_local_archive/report_projector_references_20261029/infilteration.png",
+      "bytes": 141240,
+      "sha256": "3f83b1ac301383d815e76db629f1bee2e81c0de3d3916db5a19a25e733c9f0e6",
+      "status": "Unedited user-supplied screenshot; confirm view identity and settings before final figure assembly"
+    },
+    {
+      "name": "web",
+      "source": "D:\\Screenshot 2026-10-24 113524.png",
+      "preserved_path": "_local_archive/report_projector_references_20261029/web.png",
+      "bytes": 129648,
+      "sha256": "7936a24b979049defd5f9dd588e88e26aaca257f814743ac5007870ba23a9a2c",
+      "status": "Unedited user-supplied screenshot; confirm view identity and settings before final figure assembly"
+    },
+    {
+      "name": "flooding_overview",
+      "source": "C:\\Users\\hzy\\AppData\\Local\\Temp\\codex-clipboard-8a29b95b-6c31-41e6-999a-01558ef7162a.png",
+      "preserved_path": "_local_archive/report_projector_references_20261029/flooding_overview.png",
+      "bytes": 105698,
+      "sha256": "4b1bee1491e737215078938c4e772fc441dd3679a71ad70782c0513741a44fb1",
+      "status": "Unedited user-supplied screenshot; confirm view identity and settings before final figure assembly"
+    },
+    {
+      "name": "flooding_detail_a",
+      "source": "C:\\Users\\hzy\\AppData\\Local\\Temp\\codex-clipboard-9d050363-14d6-4de5-9d7a-962908b3d401.png",
+      "preserved_path": "_local_archive/report_projector_references_20261029/flooding_detail_a.png",
+      "bytes": 40222,
+      "sha256": "ea1d19bac950b12db932f8a8fc58954650ca1ccb5162e8b494c5c70bec6ac8cc",
+      "status": "Unedited user-supplied screenshot; confirm view identity and settings before final figure assembly"
+    },
+    {
+      "name": "flooding_detail_b",
+      "source": "C:\\Users\\hzy\\AppData\\Local\\Temp\\codex-clipboard-44466b6e-6b57-42d0-8f7a-f12914655a55.png",
+      "preserved_path": "_local_archive/report_projector_references_20261029/flooding_detail_b.png",
+      "bytes": 41755,
+      "sha256": "9c92a295db5707372945f5a7fdc39821f191cd6d8bf3bfe61434657d020383b1",
+      "status": "Unedited user-supplied screenshot; confirm view identity and settings before final figure assembly"
+    }
+  ]
+}

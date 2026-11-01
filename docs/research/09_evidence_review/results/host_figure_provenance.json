@@ -1,0 +1,16 @@
+{
+  "scope": "Readability replot only; fixed completed seed-4266 experiment",
+  "sources": [
+    {
+      "path": "train/runs/20261030_000611_945296_lstm_host_adversarial_seed4266_b1a7f9/probe_comparison.csv",
+      "sha256": "f8c51e574114dc2d8e4dad2d8ca9d1e7bee6fa67c95853a86bf90ec9dedad61b"
+    },
+    {
+      "path": "train/runs/20261030_000611_945296_lstm_host_adversarial_seed4266_b1a7f9/overall_comparison.csv",
+      "sha256": "cfbedd8d3d7e8eba255514f339dbf86f8ee3419ca441391fa858f11d8b0f5bc0"
+    }
+  ],
+  "attack_probe": "43 hosts and 640 detector-training-derived evaluation records",
+  "within_type": "Bot 8 hosts/231 records; Web 6/51; Infilteration 22/396",
+  "detection": "Original real validation cohort; 251146 sequences"
+}

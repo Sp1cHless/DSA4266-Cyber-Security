@@ -1,0 +1,10 @@
+{
+  "source_commit": "44ef865be777140b1ba34e7b0abe4ec156ea8708",
+  "source_path": "train/seed_report.py",
+  "restored_path": "train/seed_report.py",
+  "sha256": "9011b31e2ba99d9569356d62a758078360f7699165e8748052aed75f5c408083",
+  "changes": "None; byte-identical to the committed team snapshot",
+  "scope": "Aggregates supplied saved predictions using frozen thresholds; no training or automatic test scoring",
+  "availability": "Original three-seed prediction arrays are not present locally",
+  "related_version_boundary": "The team holdout construction protocol belongs to this commit; its --holdout-train-attacks entry point is not in the current working-tree builder"
+}

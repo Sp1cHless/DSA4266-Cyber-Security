@@ -1,0 +1,59 @@
+{
+  "operation": "Create schematic and replot preserved diagnostics; no training, PDF editing or equation modification",
+  "scope": "Single seed 4266; temporal autoencoder with a frozen-latent linear readout fitted on real training data. This is separate from later supervised detector results.",
+  "validation_population": {
+    "sequences": 251146,
+    "attacks": 917
+  },
+  "test_population": {
+    "sequences": 263125,
+    "attacks": 851
+  },
+  "normalization_plot": "Independent ranking per model; normalized shares of own total reconstruction error; raw MSE values are in different target spaces",
+  "test_threshold": "Selected at validation FPR 1%; frozen before scoring historical real test; actual test FPR is reported",
+  "sources": [
+    {
+      "name": "scheme1_diagnostics",
+      "path": "_local_archive/cleanup_20261024_122355/retired/CIC_new/reports/superimposition_comparison_20261022/evidence/ae_runs/20261022_110605_010212_scheme1_ae_aug_e500_b128_seed4266_ihye4k0n/evaluations/20261022_113351_validation_diagnostics_oxa2qrqr/report.json",
+      "bytes": 52509,
+      "sha256": "002012f4ee53e99d4bf6db5b84b95b9c0f23ff065232466fee56a4dad1ec55a5"
+    },
+    {
+      "name": "scheme1_l2_diagnostics",
+      "path": "_local_archive/cleanup_20261024_122355/retired/CIC_new/reports/superimposition_comparison_20261022/evidence/ae_runs/20261022_170206_140989_scheme1_l2_ae_aug_e500_b128_seed4266_iu6xj7xz/evaluations/20261022_173556_scheme1_l2_comparison_wcxasexx/report.json",
+      "bytes": 53740,
+      "sha256": "fa02b2ec53b659abdb7b0e6fad37f48c55c5492c4f9e3e2dce1bbbc967fb7a0f"
+    },
+    {
+      "name": "validation_comparison",
+      "path": "_local_archive/cleanup_20261024_122355/retired/CIC_new/reports/superimposition_comparison_20261022/evidence/ae_runs/20261022_170206_140989_scheme1_l2_ae_aug_e500_b128_seed4266_iu6xj7xz/evaluations/20261022_173556_scheme1_l2_comparison_wcxasexx/three_way_comparison.json",
+      "bytes": 36388,
+      "sha256": "93828750bf094b08f7998279fed20626f74c94f1e798a8b3cd1091cfe0ef9877"
+    },
+    {
+      "name": "test_comparison",
+      "path": "_local_archive/cleanup_20261024_122355/retired/CIC_new/reports/superimposition_comparison_20261022/test_metrics.json",
+      "bytes": 116987,
+      "sha256": "68922e2b76e65d270743494a3d195587f2c022c2ca505bc79dae2f1b9e3c6f4c"
+    },
+    {
+      "name": "production_protocol",
+      "path": "CIC_new/SCHEME2_DATASET.md",
+      "bytes": 4555,
+      "sha256": "8733cb57af011e04b04ce3edc6e183163a42ccfdc20ae2dcda5b5de033966178"
+    },
+    {
+      "name": "bucket_encoder_protocol",
+      "path": "CIC_new/representation_learning/README.md",
+      "bytes": 2502,
+      "sha256": "c551cd7b55e0dd7e35d159bf18d335f42a762d3b318331a0ebd94a2c33d5788d"
+    },
+    {
+      "name": "dataset_validation",
+      "path": "datasets/dataset/validation.json",
+      "bytes": 886,
+      "sha256": "aee4e29294741bbee2ba44ac59288cc76e06e4a930626a94c931af8050fb5ffd"
+    }
+  ],
+  "matplotlib_version": "3.11.2"
+}
