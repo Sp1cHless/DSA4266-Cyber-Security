@@ -1,5 +1,8 @@
 # Project Documentation
 
+Start with [the final-report workflow map](WORKFLOWS.md) to choose the matching
+Phase I, temporal, Phase II or discussion implementation.
+
 - [Research index](research/README.md): findings, evaluation scope, selected CSV
   results and implementation entry points.
 - [Code guide](code/README.md): source/configuration inventory and static imports.

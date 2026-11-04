@@ -1,0 +1,13 @@
+table,arm,primary_attack,family,test_n,hosts,recall_control_percent,recall_holdout_percent,delta_pp,ap_control,ap_holdout
+VII,A,Brute_Force_-XSS,Web,62,4,98.39,96.77,-1.61,0.174,0.234
+VII,A,DDOS_attack-HOIC,DDoS,65,10,100.00,100.00,0.00,1.000,1.000
+VII,A,DoS_attacks-SlowHTTPTest,DoS,7,1,100.00,100.00,0.00,1.000,1.000
+VII,A,SSH-Bruteforce,Brute force,6,1,100.00,100.00,0.00,1.000,1.000
+VIII,B-1,DoS_attacks-GoldenEye,DoS,6,1,100.00,100.00,0.00,1.000,1.000
+VIII,B-1,DoS_attacks-SlowHTTPTest,DoS,7,1,100.00,100.00,0.00,1.000,1.000
+VIII,B-1,DDOS_attack-HOIC,DDoS,65,10,100.00,100.00,0.00,1.000,1.000
+VIII,B-1,DDoS_attacks-LOIC-HTTP,DDoS,110,10,99.09,54.55,-44.54,0.825,0.548
+VIII,B-1,DDOS_attack-LOIC-UDP,DDoS,14,10,100.00,66.67,-33.33,0.997,0.006
+IX,B-2,Brute_Force_-XSS,Web,62,4,98.39,16.13,-82.26,0.174,0.026
+IX,B-2,Brute_Force_-Web,Web,166,114,37.55,12.45,-25.10,0.020,0.007
+IX,B-2,SQL_Injection,Web,25,1,29.33,0.00,-29.33,0.004,0.000

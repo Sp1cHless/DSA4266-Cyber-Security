@@ -1,0 +1,4 @@
+{
+  "architecture": {"channels": 64, "hidden_size": 64, "dropout": 0.2},
+  "training": {"epochs": 30, "patience": 5, "batch_size": 512, "learning_rate": 0.001, "weight_decay": 0.0001}
+}

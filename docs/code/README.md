@@ -1,8 +1,9 @@
 # Code Guide
 
-The active inventory contains **124 source/configuration resources**,
-including **112 Python modules**. Existing training, preprocessing and
-analysis source bytes were preserved during the 4 November 2026 cleanup.
+The inventories below cover root Phase I/diagnostic source and the independent
+Phase II holdout workflow. See `INVENTORY_SUMMARY.json` for current counts.
+Root preprocessing, model and analysis source retains the cleaned baseline
+version; imported Phase II runtime source retains its committed version.
 
 | Layer | Location | Responsibility |
 |---|---|---|
@@ -11,6 +12,7 @@ analysis source bytes were preserved during the 4 November 2026 cleanup.
 | Shared training runtime | [train/common](../../train/common/README.md) | Data validation, weights, training, thresholds and evaluation |
 | Baseline models | [CNN](../../train/cnn/README.md), [LSTM](../../train/lstm/README.md), [hybrid](../../train/hybrid/README.md), [XGBoost](../../train/xgboost/README.md) | Architectures, configurations and entry points |
 | Extensions | [Attention](../../train/lstm_context/README.md), [bucket supervision](../../train/lstm_bucket/README.md), [host adversarial](../../train/lstm_host_adversarial/README.md) | Targeted LSTM variants |
+| Independent Phase II | [experiments/holdout](../../experiments/holdout/README.md) | Matching fixed-window preprocessing, runtime, LSTM and holdout aggregation |
 | Diagnostics | [analysis](../../analysis/README.md), `train/audit_*.py`, `train/diagnose_*.py`, `train/export_*.py` | Post-fit comparisons, raw-flow audits and representation export |
 | Visualization | `train/*part6*.py`, `train/part6_viewer_template.html` | Saved-model representation views and viewer composition |
 | Historical report helpers | [report_tools](../../analysis/report_tools/README.md) | Source snapshots of retired preview/plot workflows |
@@ -31,14 +33,20 @@ Run documented model commands from the complete repository root. Model folders
 depend on the shared `train/` package. Static import counts do not include every
 dynamic dispatch; baseline architecture loading uses `importlib`.
 
-## Holdout version boundary
+## Independent workflow versions
 
-The restored `train/seed_report.py` aggregates supplied predictions with saved
-thresholds. Its team holdout builder belongs to a different source revision:
-the active builder does not expose `--holdout-train-attacks`, and
-`train/unseen_subtype_report.py` is absent. Supplied holdout datasets and inherited
-three-seed summaries do not constitute a full upstream reconstruction. See
-[TRAINING_EXCLUSIONS.md](../../train/TRAINING_EXCLUSIONS.md).
+Root `CIC_new/` and `train/` cover Phase I, temporal studies and diagnostics.
+`experiments/holdout/` retains the separate Phase II implementation from commit
+`e0529b6d60aca85b23128e0788c26d0640ef1698`, including its own `CIC_new` and
+`train` packages. Its source manifest verifies imported bytes. The duplicate
+package names preserve that workflow's original imports and require a separate
+Python invocation; do not combine imports across source roots in one process.
+
+Both code inventories record workflow scope. Static imports are resolved within
+their own source root. Final-report tables and earlier diagnostic summaries are
+kept separately. Read [WORKFLOWS.md](../WORKFLOWS.md) and
+[TRAINING_EXCLUSIONS.md](../../train/TRAINING_EXCLUSIONS.md) before reproducing a
+study. Integrating source does not reconstruct missing raw prediction arrays.
 
 ## Generated material
 

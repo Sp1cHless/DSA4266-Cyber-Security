@@ -6,5 +6,5 @@
   "changes": "None; byte-identical to the committed team snapshot",
   "scope": "Aggregates supplied saved predictions using frozen thresholds; no training or automatic test scoring",
   "availability": "Original three-seed prediction arrays are not present locally",
-  "related_version_boundary": "The team holdout construction protocol belongs to this commit; its --holdout-train-attacks entry point is not in the current working-tree builder"
+  "related_version_boundary": "Root Phase I preprocessing is separate from the complete Phase II snapshot in experiments/holdout at e0529b6d60aca85b23128e0788c26d0640ef1698; see its SOURCE_MANIFEST.csv"
 }

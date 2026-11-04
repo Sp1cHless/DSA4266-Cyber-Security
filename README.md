@@ -9,13 +9,21 @@ a separate activity mask. Vector superimposition augments training only.
 |---|---|
 | [CIC_new/](CIC_new/README.md) | Preprocessing, temporal splitting, input encoder, dataset construction and fixture checks |
 | [train/](train/README.md) | Models, shared runtime, experiment drivers, evaluation and diagnostics |
+| [experiments/holdout/](experiments/holdout/README.md) | Independent Phase II control/holdout pipeline, models and aggregation |
 | [analysis/](analysis/README.md) | Post-fit research diagnostics and historical report-tool source |
 | [docs/research/](docs/research/README.md) | Study README files and compact CSV results |
 | [docs/code/](docs/code/README.md) | Source/configuration inventory and module dependencies |
 | [datasets/](datasets/README.md) | Existing local data; left unchanged during cleanup |
 | `archive/` | Local recovery material, ignored by Git |
 
-## Run
+## Choose the report workflow
+
+Root `CIC_new/`, `train/` and `analysis/` contain Phase I and discussion
+diagnostics. [experiments/holdout/](experiments/holdout/README.md) preserves the
+independent fixed-window Phase II implementation. Follow [the workflow map](docs/WORKFLOWS.md)
+before selecting commands; the two preprocessing versions are not combined.
+
+## Run Phase I
 
 Run commands from the repository root. Create a fresh environment and install
 the requirements for the workflow you need:

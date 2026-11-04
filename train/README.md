@@ -243,3 +243,12 @@ API references: [XGBoost training and callbacks](https://xgboost.readthedocs.io/
 [PyTorch LSTM](https://docs.pytorch.org/docs/stable/generated/torch.nn.LSTM.html),
 [PyTorch MPS backend](https://docs.pytorch.org/docs/stable/notes/mps.html),
 [sklearn AP definition](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.average_precision_score.html).
+
+
+## Phase II source version
+
+The final report's A/B-1/B-2 LSTM study is reproduced with the separate
+[holdout runtime](../experiments/holdout/train/README.md) and its matching
+preprocessing. Root diagnostics and the byte-identical seed aggregation helper
+remain available here; root temporal/model extensions are not substituted into
+the original Phase II implementation.

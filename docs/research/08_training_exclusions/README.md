@@ -1,36 +1,43 @@
-# Transfer After Training Exclusions
+# Phase II: Transfer After Training Exclusions
 
-## Finding
+## Final report finding
 
-Set A jointly excludes XSS, SlowHTTPTest and HOIC and retains about 99% pooled recall. Set B excludes all seven flooding primary labels and reduces pooled recall by 26.57-31.68 percentage points across model families. Separate one-seed geometry diagnostics distinguish the remaining subtype responses.
+LSTM pooled held-out recall at validation-calibrated 1% FPR thresholds is
+98.57% for Set A, 72.94% for B-1 and 12.12% for B-2. Set A excludes XSS,
+SlowHTTPTest, HOIC and SSH while their related types remain; B-1 excludes all
+flooding types and B-2 all Web types. The final report treats FTP and SSH as
+brute-force siblings. Results use seeds 4266-4268 on fixed historical-test samples.
 
-## Evidence scope
+## Canonical implementation
 
-Two fixed primary-label exclusion sets, not an exhaustive leave-one-out rotation. Validation retains excluded types for selection; the historical test has been inspected before. Table H1 reproduces the committed team three-seed summary; its per-seed prediction arrays are not present locally. H2/H3 are separate one-seed analyses, and the full training-neighbor reference includes synthetic rows.
+- [Independent holdout workflow](../../../experiments/holdout/README.md).
+- [Protocol and exact label sets](../../../experiments/holdout/CIC_new/HOLDOUT_PROTOCOL.md).
+- [Builder](../../../experiments/holdout/CIC_new/prepare_scheme2_dataset.py).
+- [Single-pair report](../../../experiments/holdout/train/unseen_subtype_report.py).
+- [Three-seed report](../../../experiments/holdout/train/seed_report.py).
 
-## Compact results
+This implementation is retained separately from root Phase I/temporal code.
+Validation retains excluded types for selection. Sequence exclusion uses primary
+labels; non-primary residual flows are audited separately.
 
-- [local_single_seed_attack_recall.csv](results/local_single_seed_attack_recall.csv)
-- [local_single_seed_test.csv](results/local_single_seed_test.csv)
-- [single_seed_flooding_geometry.csv](results/single_seed_flooding_geometry.csv)
-- [single_seed_flooding_test.csv](results/single_seed_flooding_test.csv)
-- [table_h1_three_seed_holdout.csv](results/table_h1_three_seed_holdout.csv)
+## Final report tables
 
-## Code and protocol entry points
+- [Table VI summary](results/final_report_holdout_summary.csv).
+- [Tables VII-IX subtype results](results/final_report_holdout_subtypes.csv).
+- [Source hash and transcription scope](results/final_report_provenance.json).
 
-- [Training exclusion code and version boundaries](../../../train/TRAINING_EXCLUSIONS.md)
-- [Restored team seed-report helper](../../../train/seed_report.py)
-- [train/export_holdout_lstm_projector.py](<../../../train/export_holdout_lstm_projector.py>)
-- [train/export_flooding_projector.py](<../../../train/export_flooding_projector.py>)
-- [train/diagnose_flooding_projector.py](<../../../train/diagnose_flooding_projector.py>)
+Values preserve the final PDF's printed precision. They are report transcriptions,
+not independent rescoring from raw predictions.
 
-## Local evidence
+## Separate historical support
 
-Completed runs and historical working material are consolidated in the ignored
-`archive/` directory. Restore the matching inputs before rerunning a diagnostic
-that requires saved arrays or checkpoints. See the [research index](../README.md) for the result catalog and evidence boundaries.
+- [Earlier three-subtype/four-model summary](results/table_h1_three_seed_holdout.csv): predates the final Set A; keep its population distinct.
+- [Later local single-seed test metrics](results/local_single_seed_test.csv).
+- [Later local single-seed subtype recalls](results/local_single_seed_attack_recall.csv).
+- [Historical single-seed flooding test](results/single_seed_flooding_test.csv).
+- [Historical single-seed flooding geometry](results/single_seed_flooding_geometry.csv).
 
-The inherited `table_h1_three_seed_holdout.csv` covers the historical three-label
-Set A and flooding Set B. It predates the later four-label Set A and Web-family
-exclusion. Files beginning `local_single_seed_` are separate seed-4266 test
-diagnostics for the supplied later datasets; they do not replace three-seed means.
+Root `train/export_holdout_lstm_projector.py`, `export_flooding_projector.py` and
+`diagnose_flooding_projector.py` are separate geometry diagnostics. Local complete
+runs and arrays are archived. No real-data model or threshold was refitted during
+repository integration.

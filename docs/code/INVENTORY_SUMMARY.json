@@ -1,9 +1,13 @@
 {
   "date": "2026-11-04",
-  "resources": 124,
-  "python_modules": 112,
-  "static_internal_import_edges": 287,
-  "executable_guards": 66,
+  "resources": 189,
+  "python_modules": 170,
+  "static_internal_import_edges": 387,
+  "executable_guards": 92,
+  "resources_by_workflow": {
+    "phase_i_and_diagnostics": 124,
+    "phase_ii_holdout": 65
+  },
   "resources_by_research": {
     "Attack profiles": 3,
     "Attention and context": 3,
@@ -19,12 +23,13 @@
     "Infilteration mixing": 1,
     "Input ambiguity": 3,
     "Model selection": 3,
+    "Phase II holdout": 65,
     "Representation visualization": 6,
     "Shared data validation": 1,
     "Shared training runtime": 12,
     "Training exclusions": 4,
     "Web and temporal context": 6
   },
-  "coverage": "All active Python, PowerShell, model configurations, requirements and viewer template under CIC_new, train and analysis",
-  "limits": "Static source inventory; historical report helpers require archived inputs; no training or detection-result validation"
+  "coverage": "Root CIC_new/train/analysis and independent experiments/holdout/CIC_new/train source, configurations, requirements and template",
+  "limits": "Static imports resolved within workflow source roots; generated artifacts, datasets and archives excluded; no research metrics rescored"
 }

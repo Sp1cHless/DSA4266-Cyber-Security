@@ -1,4 +1,4 @@
-# Scheme2 data workflow
+# Phase I Scheme2 Data Workflow
 
 This directory ends at a checked, model-independent train/validation/test dataset.
 Downstream classification training, evaluation and diagnostics live in
@@ -46,3 +46,11 @@ python -m unittest discover -s CIC_new/tests -t . -v
 
 Tests use small artificial flow records and temporary output directories. They
 do not scan the full source database or establish real-data accuracy.
+
+
+## Separate Phase II workflow
+
+The report's fixed-window training-exclusion builds use the independently
+versioned [holdout workflow](../experiments/holdout/README.md). This root builder
+retains the Phase I/temporal-study interface; do not substitute it for that
+workflow's historical holdout implementation.

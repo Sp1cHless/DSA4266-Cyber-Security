@@ -12,7 +12,7 @@ no report drafts, exported figures, model weights, prediction arrays or caches.
 | [05 Host information](05_host_information/README.md) | Host probes and suppression/detection tradeoffs |
 | [06 Web and temporal context](06_web_and_temporal_context/README.md) | Sparse evidence, model complementarity and longer-window comparisons |
 | [07 Targeted studies](07_targeted_studies/README.md) | Input ambiguity, attention, feature probes, distribution extension and bucket supervision |
-| [08 Training exclusions](08_training_exclusions/README.md) | Historical three-seed summaries and distinct single-seed diagnostics |
+| [08 Training exclusions](08_training_exclusions/README.md) | Final-report A/B-1/B-2 LSTM tables, independent source and separate historical diagnostics |
 
 ## Folder contract
 
@@ -27,7 +27,6 @@ maps them into the archive. They are absent from a clean clone. No model was
 trained, threshold selected or prediction rescored during cleanup.
 
 Keep full-source EDA, reused-training probes, oracle stress diagnostics,
-validation comparisons and historical-test results distinct. The three-seed
-holdout table is an inherited summary; separate local single-seed exports must
-not be treated as its raw replications. See [the code guide](../code/README.md)
+validation comparisons and historical-test results distinct. Final-report holdout tables are documented transcriptions; the earlier
+three-subtype summary and local single-seed exports retain their own scopes. See [the code guide](../code/README.md)
 for implementation and version boundaries.

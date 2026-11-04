@@ -1,0 +1,29 @@
+{
+  "source_file": "DSA4266_Group3.pdf",
+  "source_sha256": "dc00648c7cbf04976add223961835f75431a2affc19669c274e32a9898a8ca86",
+  "pdf_pages": [
+    6,
+    7,
+    17
+  ],
+  "tables": [
+    "VI",
+    "VII",
+    "VIII",
+    "IX"
+  ],
+  "operation": "transcription of final report's printed values, without recalculation",
+  "models": [
+    "LSTM"
+  ],
+  "seeds": [
+    4266,
+    4267,
+    4268
+  ],
+  "scope": "historical-test comparisons at validation-calibrated 1% FPR thresholds",
+  "source_raw_predictions_rescored": false,
+  "new_models_trained": false,
+  "precision": "Preserves printed rounding; AP is fractional, recall percent and deltas percentage points",
+  "family_mapping": "Final report groups FTP and SSH under brute force; Bot and Infilteration remain in training"
+}

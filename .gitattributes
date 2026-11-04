@@ -7,3 +7,6 @@ CIC_new/**/*.txt text eol=lf
 CIC_new/**/.gitignore text eol=lf
 CIC_new/.gitignore text eol=lf
 CIC_new/**/*.xlsx binary
+
+# Preserve the independently versioned Phase II snapshot's source bytes.
+experiments/holdout/** -text

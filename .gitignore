@@ -29,6 +29,17 @@ node_modules/
 # Delivered training datasets may also be placed beside training entry points.
 /train/dataset*/
 
+# Independent Phase II workflow: source is shared, generated material stays local.
+/experiments/holdout/CIC_new/outputs/
+/experiments/holdout/train/cache/
+/experiments/holdout/train/runs/
+/experiments/holdout/train/*/runs/
+/experiments/holdout/train/comparisons/
+/experiments/holdout/train/tests/artifacts/
+/experiments/holdout/train/dataset*/
+/experiments/holdout/datasets/
+/experiments/holdout/output/
+
 # Generated arrays, learned weights, serialized models and source databases.
 *.npz
 *.npy

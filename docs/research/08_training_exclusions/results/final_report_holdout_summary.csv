@@ -1,0 +1,4 @@
+table,arm,model,seeds,test_n,hosts,recall_control_percent,recall_holdout_percent,recall_holdout_sd_pp,delta_pp,delta_sd_pp,ap_control,ap_holdout
+VI,A,LSTM,4266;4267;4268,140,15,99.29,98.57,1.24,-0.71,1.24,0.580,0.572
+VI,B-1,LSTM,4266;4267;4268,202,12,99.50,72.94,4.00,-26.57,3.14,0.580,0.508
+VI,B-2,LSTM,4266;4267;4268,253,116,51.65,12.12,1.60,-39.53,5.74,0.580,0.547
