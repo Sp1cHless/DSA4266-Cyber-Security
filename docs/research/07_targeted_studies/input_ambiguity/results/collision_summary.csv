@@ -1,0 +1,5 @@
+group,stage,n,with_exact_benign_counterpart,counterpart_search_benign_n
+pure_FN,scaled_pre_encoder,34,10,250229
+pure_FN,scheme2_input,34,10,250229
+pure_TP,scaled_pre_encoder,104,10,250229
+pure_TP,scheme2_input,104,10,250229

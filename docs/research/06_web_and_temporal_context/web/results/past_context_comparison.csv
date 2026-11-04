@@ -1,0 +1,5 @@
+group,common_eligible_n,median_active_100s,median_active_400s,unchanged_active_n,still_single_400s_n
+Web,143,1.0,3.0,54,47
+Web_XGB_ge4_LSTM_le1,17,1.0,1.0,14,14
+Web_LSTM_ge4_XGB_le1,7,5.0,21.0,1,0
+Web_both_le1,52,2.0,6.0,15,13

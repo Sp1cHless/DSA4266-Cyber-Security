@@ -1,0 +1,7 @@
+arm,seed,scope,policy,n,positives,ap,threshold,recall,fpr,tp,fp,tn,fn
+A,4266,separate single-seed historical-test evaluation; not three-seed report means,validation_fpr_1pct,263125,851,0.5761175881316807,0.9406810402870178,0.7403055229142186,0.010847434362536879,630,2845,259429,221
+A,4266,separate single-seed historical-test evaluation; not three-seed report means,validation_fpr_0.1pct,263125,851,0.5761175881316807,0.9879987239837646,0.48413631022326675,0.0010332705491203908,412,271,262003,439
+B1,4266,separate single-seed historical-test evaluation; not three-seed report means,validation_fpr_1pct,263125,851,0.5016780181380702,0.950283944606781,0.6780258519388954,0.010618665975277719,577,2785,259489,274
+B1,4266,separate single-seed historical-test evaluation; not three-seed report means,validation_fpr_0.1pct,263125,851,0.5016780181380702,0.9914820194244385,0.41598119858989424,0.0010294577426660512,354,270,262004,497
+B2,4266,separate single-seed historical-test evaluation; not three-seed report means,validation_fpr_1pct,263125,851,0.5503240663220184,0.9302536845207214,0.6733254994124559,0.010420400039653166,573,2733,259541,278
+B2,4266,separate single-seed historical-test evaluation; not three-seed report means,validation_fpr_0.1pct,263125,851,0.5503240663220184,0.9935441017150879,0.49588719153936545,0.000937950387762454,422,246,262028,429

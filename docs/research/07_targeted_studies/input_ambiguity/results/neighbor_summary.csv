@@ -1,0 +1,7 @@
+stage,outcome,n,mean_benign_fraction_in_10nn
+scaled_pre_encoder,FN,34,0.6352941176470588
+scaled_pre_encoder,TP,104,0.5240384615384616
+scheme2_input,FN,34,0.6970588235294117
+scheme2_input,TP,104,0.6346153846153846
+lstm_hidden,FN,34,0.526470588235294
+lstm_hidden,TP,104,0.10384615384615385

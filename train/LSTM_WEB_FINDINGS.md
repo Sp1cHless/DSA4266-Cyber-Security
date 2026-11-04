@@ -112,8 +112,11 @@ the proposed mechanism; this note does not initiate further experiments.
 
 ## Evidence
 
-- [Paired circular-shift comparison](runs/20261024_223102_671768_circular_multiseed_start5_ef34ba/reports/20261025_003115_565779_paired_multiseed_comparison_f43f00/COMPARISON.md)
-- [Seed aggregate metrics](runs/20261024_223102_671768_circular_multiseed_start5_ef34ba/reports/20261025_003115_565779_paired_multiseed_comparison_f43f00/aggregate.csv)
-- [Web temporal-support interpretation](runs/20261025_013446_294043_web_temporal_support_diagnostic_7c620b/INTERPRETATION.md)
-- [Web sample-level diagnostic](runs/20261025_013446_294043_web_temporal_support_diagnostic_7c620b/web_samples.csv)
-- [Earlier window-context availability diagnostic](runs/20261024_124830_784309_window_context_availability_0ce90b/CONTEXT_DIAGNOSTIC.md)
+- [Paired circular-shift comparison](../docs/research/03_model_selection/README.md)
+- [Seed aggregate metrics](../docs/research/03_model_selection/results/aggregate.csv)
+- [Web temporal-support interpretation](../docs/research/06_web_and_temporal_context/web/README.md)
+- [Web occupancy summaries](../docs/research/06_web_and_temporal_context/web/results/web_recall_by_occupancy.csv)
+- [Window-context availability findings](../docs/research/06_web_and_temporal_context/temporal/README.md)
+
+Full sample-level records and original run notes are preserved in the ignored
+local archive; the links above point to the compact shareable evidence.

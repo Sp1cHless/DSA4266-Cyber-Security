@@ -1,0 +1,3 @@
+group,n,source_hosts,median_flows,median_active_buckets,all_tcp_sequence_n,all_udp_sequence_n,all_dns_sequence_n,all_web_ports_sequence_n,median_bytes,median_packets,median_saved_score
+pure_FN,34,15,2.0,1.0,6,24,19,2,411.0,4.0,0.9023151099681854
+pure_TP,104,14,4.0,2.0,33,57,30,16,1609.0,13.0,0.9853832125663757

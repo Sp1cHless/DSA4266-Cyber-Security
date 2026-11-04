@@ -1,6 +1,6 @@
 # Training Exclusion Code and Version Boundaries
 
-The report evaluates two fixed primary-label exclusion sets: A jointly removes
+The inherited three-seed summary evaluates two fixed primary-label exclusion sets: A jointly removes
 XSS, SlowHTTPTest and HOIC, while B removes all seven DoS/DDoS types. These are
 two fixed comparisons rather than an exhaustive leave-one-out rotation.
 
@@ -35,7 +35,7 @@ its code revision. It is not an argument of the current working-tree
 `CIC_new/prepare_scheme2_dataset.py`. The named `train/unseen_subtype_report.py`
 entry point from that protocol is also absent in this working tree. The original
 protocol snapshot remains local at
-`docs/research_map_20261029/team_snapshot/HOLDOUT_PROTOCOL.md`.
+`archive/cleanup_20261104_01/original_tree/docs/research_map_20261029/team_snapshot/HOLDOUT_PROTOCOL.md`.
 
 Existing delivered holdout datasets can be consumed by compatible model and
 geometry entry points. Restoring the seed aggregator does not supply the team's

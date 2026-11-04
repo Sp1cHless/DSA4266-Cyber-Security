@@ -1,7 +1,5 @@
 # Transfer After Training Exclusions
 
-Report sections: 6.4. Organized on 1 November 2026 from completed project records.
-
 ## Finding
 
 Set A jointly excludes XSS, SlowHTTPTest and HOIC and retains about 99% pooled recall. Set B excludes all seven flooding primary labels and reduces pooled recall by 26.57-31.68 percentage points across model families. Separate one-seed geometry diagnostics distinguish the remaining subtype responses.
@@ -10,15 +8,13 @@ Set A jointly excludes XSS, SlowHTTPTest and HOIC and retains about 99% pooled r
 
 Two fixed primary-label exclusion sets, not an exhaustive leave-one-out rotation. Validation retains excluded types for selection; the historical test has been inspected before. Table H1 reproduces the committed team three-seed summary; its per-seed prediction arrays are not present locally. H2/H3 are separate one-seed analyses, and the full training-neighbor reference includes synthetic rows.
 
-## Report figures
-
-- H2: [PNG](<figures/fig_set_a_projector_comparison.png>) and [SVG](<figures/fig_set_a_projector_comparison.svg>).
-- H3: [PNG](<figures/fig_flooding_projector_diagnostics.png>) and [SVG](<figures/fig_flooding_projector_diagnostics.svg>).
-
 ## Compact results
 
-- [figure_provenance.json](<results/figure_provenance.json>)
-- [table_h1_three_seed_holdout.csv](<results/table_h1_three_seed_holdout.csv>)
+- [local_single_seed_attack_recall.csv](results/local_single_seed_attack_recall.csv)
+- [local_single_seed_test.csv](results/local_single_seed_test.csv)
+- [single_seed_flooding_geometry.csv](results/single_seed_flooding_geometry.csv)
+- [single_seed_flooding_test.csv](results/single_seed_flooding_test.csv)
+- [table_h1_three_seed_holdout.csv](results/table_h1_three_seed_holdout.csv)
 
 ## Code and protocol entry points
 
@@ -28,17 +24,13 @@ Two fixed primary-label exclusion sets, not an exhaustive leave-one-out rotation
 - [train/export_flooding_projector.py](<../../../train/export_flooding_projector.py>)
 - [train/diagnose_flooding_projector.py](<../../../train/diagnose_flooding_projector.py>)
 
-## Local supporting records
+## Local evidence
 
-`local/` preserves the original dated insertion drafts, plotting workspaces, source screenshots and superseded displays for this topic. It is ignored by Git. These files are historical support; the current DOCX determines final section placement. Full experiment runs, arrays and checkpoints retain their original paths under the ignored runtime directories. Source paths and hashes in captured provenance describe the original records, not bundled datasets.
+Completed runs and historical working material are consolidated in the ignored
+`archive/` directory. Restore the matching inputs before rerunning a diagnostic
+that requires saved arrays or checkpoints. See the [research index](../README.md) for the result catalog and evidence boundaries.
 
-## Saved evidence locations
-
-These original records retain their existing paths; full runs and private evidence maps are intentionally local.
-
-- `docs/research_map_20261029/team_snapshot/HOLDOUT_PROTOCOL.md`
-- `train/runs/20261026_holdout_lstm_projector_comparison/manifest.json`
-- `train/runs/20261029_192411_050197_all_flooding_test_projector_699e44/manifest.json`
-- `train/runs/20261029_192411_050197_all_flooding_test_projector_699e44/projector_flooding_selected.png`
-- `train/runs/20261029_192945_155514_flooding_full_training_neighbors_56c0cf/projector_loic_http_fn.png`
-- `train/runs/20261029_192945_155514_flooding_full_training_neighbors_56c0cf/summary.json`
+The inherited `table_h1_three_seed_holdout.csv` covers the historical three-label
+Set A and flooding Set B. It predates the later four-label Set A and Web-family
+exclusion. Files beginning `local_single_seed_` are separate seed-4266 test
+diagnostics for the supplied later datasets; they do not replace three-seed means.

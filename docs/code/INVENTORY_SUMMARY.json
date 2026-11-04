@@ -1,9 +1,9 @@
 {
-  "date": "2026-11-01",
-  "resources": 113,
-  "python_modules": 102,
-  "static_internal_import_edges": 259,
-  "executable_guards": 56,
+  "date": "2026-11-04",
+  "resources": 124,
+  "python_modules": 112,
+  "static_internal_import_edges": 287,
+  "executable_guards": 66,
   "resources_by_research": {
     "Attack profiles": 3,
     "Attention and context": 3,
@@ -13,16 +13,18 @@
     "Data and representation": 19,
     "Distribution statistics": 6,
     "Environment": 2,
+    "Historical report tools": 5,
     "Host information": 6,
     "Implementation tests": 20,
     "Infilteration mixing": 1,
     "Input ambiguity": 3,
     "Model selection": 3,
+    "Representation visualization": 6,
     "Shared data validation": 1,
     "Shared training runtime": 12,
     "Training exclusions": 4,
     "Web and temporal context": 6
   },
-  "coverage": "Every non-ignored Python/config/requirements/PowerShell file under CIC_new, train and analysis",
-  "limits": "Static import relationships and source roles, not a full execution or model-result audit. Dynamic architecture dispatch is described in README."
+  "coverage": "All active Python, PowerShell, model configurations, requirements and viewer template under CIC_new, train and analysis",
+  "limits": "Static source inventory; historical report helpers require archived inputs; no training or detection-result validation"
 }

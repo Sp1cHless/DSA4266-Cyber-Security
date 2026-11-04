@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Part 6 - LSTM Vector Space</title>
+<script src="plotly-3.1.0.min.js"></script>
+<style>
+body { margin:0; font:15px/1.5 system-ui,sans-serif; color:#1c2833; background:#f7f9fb; }
+header, main, footer { max-width:1400px; margin:auto; padding:20px 28px; }
+h1 { font-size:26px; margin:0 0 6px; } p { margin:5px 0; }
+.controls { display:flex; flex-wrap:wrap; gap:20px; align-items:center; margin-top:16px; }
+select { font:inherit; padding:6px 10px; margin-left:6px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.panel { background:white; border:1px solid #dce3e9; min-width:0; }
+.plot { height:480px; } h2 { font-size:17px; margin:14px 18px 0; }
+.note { color:#586672; font-size:13px; }
+@media(max-width:850px) { .grid { grid-template-columns:1fr; } header,main,footer { padding:16px; } .plot { height:430px; } }
+</style>
+</head>
+<body>
+<header>
+<h1>LSTM representation geometry after training exclusions</h1>
+<p>Seed 4266 · Real training references + matched test sequences · TP/FN at each model's frozen validation 1% FPR threshold</p>
+<div class="controls">
+<label>Projection <select id="space"><option value="pca">Training-fitted PCA</option><option value="decision">Decision-aligned projection</option></select></label>
+<label>View <select id="dimensions"><option value="2">2D</option><option value="3">3D - rotate to inspect</option></select></label>
+<span class="note">Hover for sample details. Click legend entries to show or hide groups.</span>
+</div>
+</header>
+<main class="grid">
+<section class="panel"><h2>(a) Set A - Web siblings retained</h2><div class="plot" id="plotA"></div></section>
+<section class="panel"><h2>(b) Set B-2 - Entire web family removed</h2><div class="plot" id="plotB2"></div></section>
+<section class="panel"><h2>(c) Set B-1 - Flooding subtypes</h2><div class="plot" id="plotB1"></div></section>
+<section class="panel"><h2>(d) Set B-1 - Test-sequence flow count</h2><div class="plot" id="plotVolume"></div></section>
+</main>
+<footer>
+<p>Circles: detected attacks (TP). Crosses: missed attacks (FN). Background: 4,000 sampled real train benign sequences and all real retained train attacks. Green diamonds highlight retained web siblings.</p>
+<p class="note">Exploratory single-seed visualization; report tables retain their three-seed estimates. Training records are reused as references. Validation retains excluded labels for checkpoint and threshold selection. Each model has its own training-fitted projection; cross-model coordinates are not aligned. Panels (c) and (d) use the same coordinates. Point density is not population prevalence. A PCA view does not reproduce the full-dimensional decision boundary.</p>
+<p class="note">In the decision-aligned view, x is the attack logit minus the frozen threshold logit. Positive x is detected. The remaining axes are training-fitted principal components orthogonal to the classifier direction.</p>
+</footer>
+<script>
+const DATA = __PART6_DATA__;
+const names=['DoS_attacks-GoldenEye','DoS_attacks-SlowHTTPTest','DDOS_attack-HOIC','DDoS_attacks-LOIC-HTTP','DDOS_attack-LOIC-UDP'];
+const short=['GoldenEye','SlowHTTPTest','HOIC','LOIC-HTTP','LOIC-UDP'];
+const colors=['#0072B2','#009E73','#CC79A7','#D55E00','#E69F00'];
+const siblings=['Brute_Force_-Web','SQL_Injection'];
+function draw(id,arm,volume=false){
+  const source=DATA[arm], space=document.getElementById('space').value;
+  const dimensions=Number(document.getElementById('dimensions').value), coords=source[space], rows=source.rows;
+  const traces=[];
+  function add(name,indices,color,size,symbol,opacity){
+    if(!indices.length)return;
+    const marker={color,size,symbol,opacity};
+    if(Array.isArray(color)){marker.colorscale='Viridis';marker.colorbar={title:{text:'log10(1 + flows)'},thickness:12};marker.showscale=true;}
+    const trace={type:dimensions===3?'scatter3d':'scattergl',mode:'markers',name,
+      x:indices.map(i=>coords[i][0]),y:indices.map(i=>coords[i][1]),marker,
+      text:indices.map(i=>{const r=rows[i];return `ID ${r.sample_id}<br>${r.split}: ${r.primary_attack}<br>Flows: ${r.flow_count}<br>Attack score: ${Number(r.score).toPrecision(5)}<br>Outcome: ${r.outcome_1pct}`;}),
+      hovertemplate:'%{text}<extra></extra>'};
+    if(dimensions===3)trace.z=indices.map(i=>coords[i][2]);
+    traces.push(trace);
+  }
+  const find=fn=>rows.flatMap((r,i)=>fn(r)?[i]:[]);
+  add('Real train benign',find(r=>r.split==='train'&&r.label==='Benign'),'#969CA4',2,'circle',.18);
+  add('Real train retained attacks',find(r=>r.split==='train'&&r.label==='Attack'&&(arm!=='A'||!siblings.includes(r.primary_attack))),'#7199AD',2,'circle',.18);
+  if(arm==='A')add('Real train web siblings',find(r=>r.split==='train'&&siblings.includes(r.primary_attack)),'#009E73',3,'diamond',.45);
+  if(arm!=='B1'){
+    for(const outcome of ['TP','FN'])add(`Test XSS ${outcome}`,find(r=>r.split==='test'&&r.primary_attack==='Brute_Force_-XSS'&&r.outcome_1pct===outcome),'#8B3591',6,outcome==='TP'?'circle':'x',.9);
+  }else if(volume){
+    const indices=find(r=>r.split==='test'&&names.includes(r.primary_attack));
+    add('Test flooding flow count',indices,indices.map(i=>Math.log10(1+Number(rows[i].flow_count))),6,
+        indices.map(i=>rows[i].outcome_1pct==='TP'?'circle':'x'),.9);
+  }else{
+    names.forEach((n,j)=>{for(const outcome of ['TP','FN'])add(`${short[j]} ${outcome}`,find(r=>r.split==='test'&&r.primary_attack===n&&r.outcome_1pct===outcome),colors[j],6,outcome==='TP'?'circle':'x',.9);});
+  }
+  const variance=source.manifest.explained_variance_ratio;
+  const axisTitles=space==='pca'?variance.map((v,i)=>`Train-reference PC${i+1} (${(v*100).toFixed(1)}%)`):['Attack logit minus threshold logit','Orthogonal train-reference PC1','Orthogonal train-reference PC2'];
+  const layout={margin:{l:70,r:30,t:16,b:80},paper_bgcolor:'white',plot_bgcolor:'white',
+      font:{family:'system-ui',size:12,color:'#243442'},legend:{orientation:'h',y:-.2,font:{size:10}},
+      xaxis:{title:{text:axisTitles[0]},zeroline:false},yaxis:{title:{text:axisTitles[1]},zeroline:false},
+      scene:{xaxis:{title:{text:axisTitles[0]}},yaxis:{title:{text:axisTitles[1]}},zaxis:{title:{text:axisTitles[2]}}},
+      uirevision:`${arm}-${space}-${dimensions}`};
+  if(space==='decision'&&dimensions===2)layout.shapes=[{type:'line',xref:'x',yref:'paper',x0:0,x1:0,y0:0,y1:1,line:{color:'#4B4F54',width:1,dash:'dash'}}];
+  Plotly.react(id,traces,layout,{responsive:true,displaylogo:false,toImageButtonOptions:{format:'png',scale:2}});
+}
+function render(){draw('plotA','A');draw('plotB2','B2');draw('plotB1','B1');draw('plotVolume','B1',true);}
+document.getElementById('space').addEventListener('change',render);
+document.getElementById('dimensions').addEventListener('change',render);
+render();
+</script>
+</body>
+</html>

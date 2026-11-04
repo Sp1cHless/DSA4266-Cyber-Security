@@ -7,7 +7,8 @@ __pycache__/
 node_modules/
 ~$*
 
-# Retired workflows, historical experiments, and cleanup recovery records.
+# Local archives and cleanup recovery records.
+/archive/
 /_local_archive/
 
 # Local source data and the delivered Scheme2 dataset.
@@ -44,15 +45,35 @@ node_modules/
 *.sqlite3
 
 # Detailed local research maps contain machine-specific evidence inventories.
-# Share the compact conclusions in docs/RESEARCH_FINDINGS.md instead.
+# Share the compact study summaries in docs/research/ instead.
 /docs/research_map_*/
 
 # Report rendering, intermediate document copies and local QA artifacts.
 /output/
+/tmp/
+/docs/report/
+/docs/presentation/
+
+# Generated documents, exported figures and publication bundles.
+*.pdf
+*.doc
+*.docx
+*.ppt
+*.pptx
+*.png
+*.svg
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.zip
+*.aux
+*.log
+*.fdb_latexmk
+*.fls
+/analysis/report_tools/**/figures/
+/analysis/report_tools/**/results/
 
 # Historical insertion drafts, original screenshots and plotting workspaces.
-# Share only the curated research README files, results, provenance and figures.
+# Share source, README files and compact result summaries.
 /docs/research/**/local/
-
-# The research-tree PDF and SVG are shared; the duplicate raster is local.
-/docs/research/overview/*.png

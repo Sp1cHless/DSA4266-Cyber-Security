@@ -1,80 +1,64 @@
-# Scheme2 network traffic classification
+# Temporal Network Intrusion Detection
 
-This branch contains the Scheme2 data construction workflow and the downstream
-models in `train/`. Scheme2 converts CIC-IDS2018 flows into frozen bucket vectors,
-adds zero-shift training donor vectors, applies L2 normalization, and appends a
-separate flow-count channel. Default final input shape: `[N, 10, 65]`.
+NF-CICIDS2018-v3 flows are grouped into source-host windows, encoded as frozen
+bucket embeddings, and classified by CNN, LSTM, CNN-LSTM or XGBoost. The baseline
+input has ten positions with 64 embedding coordinates, one intensity channel and
+a separate activity mask. Vector superimposition augments training only.
 
-| Path | Purpose |
+| Directory | Contents |
 |---|---|
-| `CIC_new/prepare_scheme2_dataset.py` | One entry point from source database to checked train/validation/test inputs |
-| `CIC_new/preprocessing/` | Sequence construction, bucket statistics, temporal split, scaling, donor plans, export and metadata |
-| `CIC_new/representation_learning/` | Fit the input bucket encoder, then freeze and encode originals |
-| `CIC_new/tests/` | Small data-construction checks using artificial fixtures |
-| `datasets/` | Local source database and delivered final dataset; see its README |
-| `train/` | Current model training, comparison, evaluation and diagnostics |
-| `docs/RESEARCH_FINDINGS.md` | Compact research conclusions and selected numerical results |
-| `docs/GROUP REPORT.docx` | Current Word report draft |
-| `docs/research/` | Report-aligned research branches, selected figures, compact results and evidence sources |
-| `docs/code/` | Complete source/configuration classification, dependency inventory and implementation navigation |
+| [CIC_new/](CIC_new/README.md) | Preprocessing, temporal splitting, input encoder, dataset construction and fixture checks |
+| [train/](train/README.md) | Models, shared runtime, experiment drivers, evaluation and diagnostics |
+| [analysis/](analysis/README.md) | Post-fit research diagnostics and historical report-tool source |
+| [docs/research/](docs/research/README.md) | Study README files and compact CSV results |
+| [docs/code/](docs/code/README.md) | Source/configuration inventory and module dependencies |
+| [datasets/](datasets/README.md) | Existing local data; left unchanged during cleanup |
+| `archive/` | Local recovery material, ignored by Git |
 
-For research presentation, start with [the research index](docs/research/README.md).
-Each study connects its finding and report section to the relevant figures,
-results and existing code entry points. The runtime source layout stays stable.
-For implementation details, use [the code structure guide](docs/code/README.md).
+## Run
 
-## Use an existing dataset
-
-Place the complete delivered final dataset under `datasets/dataset/`. Keep its
-manifests, donor plan, frozen encoder, metadata sidecars and all three shard folders.
-Install `train/requirements.txt`, then follow [the training guide](train/README.md).
-Training reads the delivered dataset directly; no data rebuild is required.
-
-## Build a new dataset
-
-Run from the repository root. An existing Python environment can also be used.
+Run commands from the repository root. Create a fresh environment and install
+the requirements for the workflow you need:
 
 ```powershell
-python -m venv .venv-cnn
-.\.venv-cnn\Scripts\python.exe -m pip install -r CIC_new/representation_learning/requirements.txt
-.\.venv-cnn\Scripts\python.exe -u CIC_new/prepare_scheme2_dataset.py
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r train/requirements.txt
+.\.venv\Scripts\python.exe train/lstm/train.py --device cpu
 ```
 
-The default source is `datasets/cic_2018_traffic.db`, table `network_flows`.
-Use `--db <path>` for another full-schema SQLite source. The builder reserves a
-unique directory under `CIC_new/outputs/scheme2_runs/` and prints its final
-`dataset/` path. Pass that path to training with `--dataset <path>` or copy the
-complete final directory to `datasets/dataset/`.
+Training reads `datasets/dataset/` by default. See [the training guide](train/README.md)
+for other models, devices, paired comparisons and frozen evaluation.
 
-See [the data workflow](CIC_new/README.md) and
-[the construction protocol](CIC_new/SCHEME2_DATASET.md) for stage and split details.
-The bucket encoder is an input transform; downstream detector training belongs
-to `train/`.
+To build a new dataset, install
+`CIC_new/representation_learning/requirements.txt` and run:
+
+```powershell
+python CIC_new/prepare_scheme2_dataset.py
+```
+
+The default source is `datasets/cic_2018_traffic.db`. See
+[the construction guide](CIC_new/SCHEME2_DATASET.md) for source options and the split
+protocol. New outputs use unique directories; completed experiment data and
+weights must not be overwritten.
 
 ## Repository scope
 
-Scheme1, old temporal-AE trainers/evaluators, exploratory analyses, unrelated
-dataset workflows, old reports and historical experiments are stored locally
-under `_local_archive/`. That directory is ignored by Git. Its dated cleanup
-directory includes a move ledger and original copies of edited files.
-Source data, completed datasets, checkpoints and generated model results remain
-local. Existing completed results are preserved; new builds require fresh outputs.
+Git contains source, fixed configurations, requirements, tests, README files and
+small selected result tables. Report documents, exported figures, renderings,
+complete runs, prediction arrays, caches and local environments are excluded.
+The 4 November 2026 cleanup moved old material to `archive/cleanup_20261104_01/`;
+its relocation manifest preserves original paths. `datasets/` was not moved or
+edited. Archiving consolidates local files; it does not free their disk space.
 
-Dataset exports placed under `train/dataset*/` and generated arrays, weights and
-serialized models are also ignored. Detailed `docs/research_map_*/` evidence
-inventories remain local, preserving their original paths for research review.
-Share [the compact research findings](docs/RESEARCH_FINDINGS.md), source code,
-experiment guides and fixed configuration files. Full run directories, prediction
-arrays, data shards, caches and machine-specific cleanup records stay local.
+New runs may recreate the ignored output/cache paths documented by each workflow.
+Historical diagnostics requiring saved predictions need the corresponding archived
+inputs restored or supplied explicitly. Historical report helpers are retained
+under `analysis/report_tools/` as source snapshots with documented input needs.
 
-The curated `docs/research/` folders are shareable. Their `local/` subdirectories
-retain historical insertion drafts, original screenshots, plotting workspaces
-and superseded displays and are ignored. `output/` contains local document
-copies and rendering/QA artifacts and is also ignored. The research-tree PDF
-and SVG live together under `docs/research/overview/`; its duplicate PNG stays
-local. See [the document guide](docs/README.md) for the current report entry point.
+## Result interpretation
 
-The same historical Scheme2 test split has already been inspected in project work.
-It is not a newly untouched holdout. Synthetic training examples reuse real
-training donors and are not independent observations. Fixture checks verify
-implementation behavior, not detection performance. Project files use English.
+Keep full-source EDA, reused-training probes, oracle stress diagnostics,
+validation model selection and historical-test evaluations distinct. Synthetic
+mixtures reuse training donors. Repeated seeds measure training variability on
+fixed samples. The historical test split has already been inspected; it is not
+an untouched final holdout. [Each study](docs/research/README.md) records its scope.

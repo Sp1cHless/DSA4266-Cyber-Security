@@ -19,4 +19,11 @@ The feature audit has a dedicated [protocol](INFILTERATION_FEATURE_AUDIT.md).
 Additional raw-flow audits and representation exports live under `train/` and
 are routed by [the code guide](../docs/code/README.md). These are research
 diagnostics with specific data scopes; their outputs are not all held-out test
-metrics. Full generated runs remain local and ignored.
+metrics. Historical generated runs are consolidated in the ignored `archive/` directory.
+New diagnostics write fresh ignored outputs.
+
+
+## Historical report tools
+
+[report_tools/README.md](report_tools/README.md) groups the retained report-preview
+and figure-helper source. Their drafts and generated assets are archived.
